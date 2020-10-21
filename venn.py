@@ -124,7 +124,7 @@ class VennDiagram:
                 unraveled_points.append((swap_row, column, 0.25 * math.pi))
             column += 1
 
-        inner_radius = 30
+        inner_radius = 20
         spacing = 10
 
         # Stage 2: Cartesian coordinates
@@ -194,12 +194,9 @@ if __name__ == "__main__":
 
     # Victoria
     diagram = VennDiagram(7, [1, 3, 2, 3, 4, 5, 4, 3, 6, 5, 4, 2, 3, 4, 3, 5, 4, 2])
-    #diagram.condensed_code()
 
     fig, ax = plt.subplots()
     polygons = [Polygon(diagram.make_spline(i)) for i in range(diagram.n)]
-    #polygons = [Polygon(diagram.make_spline(i)) for i in range(1)]
-    #polygons += [Polygon(diagram.make_polyline(i)) for i in range(1)]
     patches = PatchCollection(polygons, alpha=0.2)
     ax.add_collection(patches)
     plt.xlim(-100, 100)
