@@ -21,11 +21,35 @@ class VennDiagram:
     column.
     """
 
-    def __init__(self, n, code):
+    def __init__(self, n, weave_code):
         self.n = n
-        self.code = code
+
+        self.condensed_code = self.parse_weave_code(weave_code)
+        self.code = [y for x in self.condensed_code for y in x]
+
         self.validate_basic()
         self.validate_venn()
+
+    def parse_weave_code(self, weave_code):
+        rows = weave_code.strip().split()
+        matrix = []
+        for i, row in enumerate(rows):
+            interpolated_row = "0".join(row)
+            if i % 2 == 0:
+                interpolated_row = "0" + interpolated_row
+            else:
+                interpolated_row = interpolated_row + "0"
+            interpolated_row = [int(x) for x in interpolated_row]
+            matrix.append(interpolated_row)
+
+        code = []
+        for column in range(len(matrix[0])):
+            code_entry = []
+            for row in range(len(matrix)):
+                if matrix[row][column] == 1:
+                    code_entry.append(row + 1)
+            code.append(code_entry)
+        return code
 
     def validate_basic(self):
         """Check for basic errors in the matrix code."""
@@ -79,59 +103,30 @@ class VennDiagram:
             full_code += self.code
         return full_code
 
-    def condensed_code(self):
-        """Return a variant of the code where swaps are merged together
-        vertically. Easiest to explain with examples:
-
-        [1, 2, 3, 4, 3, 2] -> [[1], [2], [3], [4], [3], [2]]
-        [1, 2, 4, 3, 2] -> [[1], [2, 4], [3], [2]]
-        [1, 2, 3, 4, 1, 2, 3, 2] -> [[1], [2], [1, 3], [2, 4], [3], [2]]
-        """
-        # Locate first discontinuity.
-        for i in range(len(self.code)):
-            current = self.code[i]
-            previous = self.code[(i - 1) % len(self.code)]
-            if abs(current - previous) > 1:
-                discontinuity_index = i
-                break
-        else:
-            # No discontinuities at all... not sure if this is possible.
-            raise ValueError("This shouldn't happen")
-        # Rotate code to first discontinuity.
-        code = self.code[discontinuity_index:] + self.code[:discontinuity_index]
-
-        # Step 1: split into chunks.
-        chunks = []
-        for i in range(len(code)):
-            current = code[i]
-            previous = code[(i - 1) % len(self.code)]
-            if abs(current - previous) > 1:
-                chunks.append([])
-            chunks[-1].append(current)
-
-        print(chunks)
-
     def make_spline(self, index=0):
         """Produce a nice curved shape."""
-        unraveled_points = []
-        row, column = 0, index * ((2 ** self.n - 2) // self.n)
-        for swap_row in self.full_code():
-            if row == swap_row - 1:
-                row += 1
-                unraveled_points.append((swap_row, column, -0.25 * math.pi))
-            elif row == swap_row:
-                row -= 1
-                unraveled_points.append((swap_row, column, 0.25 * math.pi))
-            column += 1
+        angle_scaling = 1.2
 
-        inner_radius = 20
-        spacing = 10
+        unraveled_points = []
+        row, column = 0, index * len(self.condensed_code)
+        for i in range(self.n):
+            for swap_rows in self.condensed_code:
+                if row + 1 in swap_rows:
+                    unraveled_points.append((row + 1, column, -0.25 * math.pi * angle_scaling))
+                    row += 1
+                elif row in swap_rows:
+                    unraveled_points.append((row, column, 0.25 * math.pi * angle_scaling))
+                    row -= 1
+                column += 1
+
+        inner_radius = 30
+        spacing = 5
 
         # Stage 2: Cartesian coordinates
         control_points = []
         for row, column, angle in unraveled_points:
             radius = inner_radius + spacing * row
-            theta = column * 2 * math.pi / (2 ** self.n - 2)
+            theta = column * 2 * math.pi / (self.n * len(self.condensed_code))
             new_angle = angle + theta + math.pi * 0.5
             x = radius * math.cos(theta)
             y = radius * math.sin(theta)
@@ -146,10 +141,11 @@ class VennDiagram:
             splines.append(spline)
 
         # Stage 4: Final points
+        resolution = 10
         points = []
         for spline in splines:
-            for i in range(10):
-                points.append(spline.curve(i / 10))
+            for i in range(resolution):
+                points.append(spline.curve(i / resolution))
 
         return points
 
@@ -166,7 +162,7 @@ class VennDiagram:
             column += 1
             combinatorial_points.append((row, column))
 
-        inner_radius = 30
+        inner_radius = 60
         spacing = 10
 
         # Stage 2: polar coordinates
@@ -193,7 +189,7 @@ if __name__ == "__main__":
     from matplotlib.collections import PatchCollection
 
     # Victoria
-    diagram = VennDiagram(7, [1, 3, 2, 3, 4, 5, 4, 3, 6, 5, 4, 2, 3, 4, 3, 5, 4, 2])
+    diagram = VennDiagram(7, "100000 110010 110111 101111 001101 000100")
 
     fig, ax = plt.subplots()
     polygons = [Polygon(diagram.make_spline(i)) for i in range(diagram.n)]
