@@ -200,13 +200,30 @@ if __name__ == "__main__":
     import matplotlib.patches
     import matplotlib.collections
 
-    # Victoria
+    diagrams_json = {}
+
     diagram = VennDiagram(7, "100000 110010 110111 101111 001101 000100")
+    diagrams_json["victoria"] = diagram.export_json()
+
+    diagram = VennDiagram(7, "10000 11010 11111 11111 01101 00100")
+    diagrams_json["adelaide"] = diagram.export_json()
+
+    diagram = VennDiagram(7, "100000 110001 110111 111110 111000 010000")
+    diagrams_json["massey"] = diagram.export_json()
+
+    diagram = VennDiagram(7, "1000000 1000101 1101101 0111011 0011010 0010000")
+    diagrams_json["manawatu"] = diagram.export_json()
+
+    diagram = VennDiagram(7, "1000000 1100010 1110110 1011101 0001101 0000100")
+    diagrams_json["palmerston_north"] = diagram.export_json()
+
+    diagram = VennDiagram(7, "10000 10101 11111 11111 11010 10000")
+    diagrams_json["hamilton"] = diagram.export_json()
 
     import json
     with open("app/venn_diagrams.js", "w") as f:
         f.write("const venn_diagrams = ");
-        json.dump(diagram.export_json(), f)
+        json.dump(diagrams_json, f)
         f.write(";");
 
     fig, ax = plt.subplots()
