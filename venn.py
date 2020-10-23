@@ -1,5 +1,7 @@
 import math
 from spline import Spline
+import shapely.geometry
+import shapely.affinity
 
 class VennDiagram:
     """A simple, polar symmetric monotone Venn diagram represented with a
@@ -149,51 +151,67 @@ class VennDiagram:
 
         return points
 
-    def make_polyline(self, index=0):
-        """Produce an ugly polygonal shape."""
-        # Stage 1: "combinatorial points"
-        row, column = 0, index * ((2 ** self.n - 2) // self.n)
-        combinatorial_points = [(row, column)]
-        for swap_row in self.full_code():
-            if row == swap_row - 1:
-                row += 1
-            elif row == swap_row:
-                row -= 1
-            column += 1
-            combinatorial_points.append((row, column))
-
-        inner_radius = 60
-        spacing = 10
-
-        # Stage 2: polar coordinates
-        polar_points = [
-            (
-                inner_radius + spacing * row,
-                column * 2 * math.pi / (2 ** self.n - 2)
+    def make_regions(self):
+        """Return a list of all polygons comprising the regions of this Venn diagram."""
+        original_curve = shapely.geometry.Polygon(self.make_spline())
+        curves = []
+        for i in range(self.n):
+            angle = 2 * math.pi * i / self.n
+            curve = shapely.affinity.rotate(
+                original_curve, angle, origin=(0, 0), use_radians=True
             )
-            for row, column in combinatorial_points
-        ]
+            curves.append(curve)
 
-        # Stage 3: Cartesian coordinates
-        points = [
-            (r * math.cos(theta), r * math.sin(theta))
-            for r, theta in polar_points
-        ]
+        # Region at index 0 is an empty set.
+        regions = [[]]
+        for rank in range(1, 2 ** self.n):
+            curves_included = []
+            curves_excluded = []
+            tmp_rank = rank
+            for i in range(self.n):
+                if tmp_rank % 2 == 0:
+                    curves_excluded.append(curves[i])
+                else:
+                    curves_included.append(curves[i])
+                tmp_rank //= 2
 
-        return points
+            region = curves_included[0]
+            for curve in curves_included[1:]:
+                region = region.intersection(curve)
+            for curve in curves_excluded:
+                region = region.difference(curve)
 
+            coordinates = [(x, y) for x, y in region.exterior.coords]
+            regions.append(coordinates)
+
+        return regions
+
+    def export_json(self):
+        spline = self.make_spline()
+        regions = self.make_regions()
+        return {
+            "n": self.n,
+            "spline": spline,
+            "regions": regions,
+        }
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    from matplotlib.patches import Polygon
-    from matplotlib.collections import PatchCollection
+    import matplotlib.patches
+    import matplotlib.collections
 
     # Victoria
     diagram = VennDiagram(7, "100000 110010 110111 101111 001101 000100")
 
+    import json
+    with open("app/venn_diagrams.js", "w") as f:
+        f.write("const venn_diagrams = ");
+        json.dump(diagram.export_json(), f)
+        f.write(";");
+
     fig, ax = plt.subplots()
-    polygons = [Polygon(diagram.make_spline(i)) for i in range(diagram.n)]
-    patches = PatchCollection(polygons, alpha=0.2)
+    polygons = [matplotlib.patches.Polygon(diagram.make_spline(i)) for i in range(diagram.n)]
+    patches = matplotlib.collections.PatchCollection(polygons, alpha=0.2)
     ax.add_collection(patches)
     plt.xlim(-100, 100)
     plt.ylim(-100, 100)
