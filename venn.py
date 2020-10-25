@@ -105,8 +105,8 @@ class VennDiagram:
             full_code += self.code
         return full_code
 
-    def make_spline(self, index=0):
-        """Produce a nice curved shape."""
+    def get_spline_stage_1(self, index=0):
+        """Retrieve Cartesian coordinates and angles of each spline control point."""
         angle_scaling = 1.2
 
         unraveled_points = []
@@ -124,7 +124,6 @@ class VennDiagram:
         inner_radius = 30
         spacing = 5
 
-        # Stage 2: Cartesian coordinates
         control_points = []
         for row, column, angle in unraveled_points:
             radius = inner_radius + spacing * row
@@ -134,7 +133,12 @@ class VennDiagram:
             y = radius * math.sin(theta)
             control_points.append((x, y, new_angle))
 
-        # Stage 3: Splines
+        return control_points
+
+    def get_splines(self, index=0):
+        """Get the shape of a single curve as a list of Splines."""
+        control_points = self.get_spline_stage_1(index=index)
+
         splines = []
         for i in range(len(control_points)):
             x_1, y_1, theta_1 = control_points[i]
@@ -142,18 +146,21 @@ class VennDiagram:
             spline = Spline(x_1, y_1, x_2, y_2, theta_1, theta_2)
             splines.append(spline)
 
-        # Stage 4: Final points
+        return splines
+
+    def get_polygon(self, index=0):
+        """Get the shape of a single curve as a polygon."""
+        splines = self.get_splines(index)
         resolution = 10
         points = []
         for spline in splines:
             for i in range(resolution):
                 points.append(spline.curve(i / resolution))
-
         return points
 
     def make_regions(self):
         """Return a list of all polygons comprising the regions of this Venn diagram."""
-        original_curve = shapely.geometry.Polygon(self.make_spline())
+        original_curve = shapely.geometry.Polygon(self.get_polygon())
         curves = []
         for i in range(self.n):
             angle = 2 * math.pi * i / self.n
@@ -187,13 +194,22 @@ class VennDiagram:
         return regions
 
     def export_json(self):
-        spline = self.make_spline()
+        spline = self.get_polygon()
         regions = self.make_regions()
         return {
             "n": self.n,
             "spline": spline,
             "regions": regions,
         }
+
+DIAGRAMS = {
+    "victoria": VennDiagram(7, "100000 110010 110111 101111 001101 000100"),
+    "adelaide": VennDiagram(7, "10000 11010 11111 11111 01101 00100"),
+    "massey": VennDiagram(7, "100000 110001 110111 111110 111000 010000"),
+    "manawatu": VennDiagram(7, "1000000 1000101 1101101 0111011 0011010 0010000"),
+    "palmerston_north": VennDiagram(7, "1000000 1100010 1110110 1011101 0001101 0000100"),
+    "hamilton": VennDiagram(7, "10000 10101 11111 11111 11010 10000")
+}
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -202,23 +218,8 @@ if __name__ == "__main__":
 
     diagrams_json = {}
 
-    diagram = VennDiagram(7, "100000 110010 110111 101111 001101 000100")
-    diagrams_json["victoria"] = diagram.export_json()
-
-    diagram = VennDiagram(7, "10000 11010 11111 11111 01101 00100")
-    diagrams_json["adelaide"] = diagram.export_json()
-
-    diagram = VennDiagram(7, "100000 110001 110111 111110 111000 010000")
-    diagrams_json["massey"] = diagram.export_json()
-
-    diagram = VennDiagram(7, "1000000 1000101 1101101 0111011 0011010 0010000")
-    diagrams_json["manawatu"] = diagram.export_json()
-
-    diagram = VennDiagram(7, "1000000 1100010 1110110 1011101 0001101 0000100")
-    diagrams_json["palmerston_north"] = diagram.export_json()
-
-    diagram = VennDiagram(7, "10000 10101 11111 11111 11010 10000")
-    diagrams_json["hamilton"] = diagram.export_json()
+    for name, diagram in DIAGRAMS.items():
+        diagrams_json[name] = diagram.export_json()
 
     import json
     with open("app/venn_diagrams.js", "w") as f:
@@ -227,7 +228,7 @@ if __name__ == "__main__":
         f.write(";");
 
     fig, ax = plt.subplots()
-    polygons = [matplotlib.patches.Polygon(diagram.make_spline(i)) for i in range(diagram.n)]
+    polygons = [matplotlib.patches.Polygon(diagram.get_polygon(i)) for i in range(diagram.n)]
     patches = matplotlib.collections.PatchCollection(polygons, alpha=0.2)
     ax.add_collection(patches)
     plt.xlim(-100, 100)
