@@ -22,6 +22,30 @@ class Spline:
         self.rho = (2 + alpha) / (1 + (1 - c) * math.cos(self.theta_1) + c * math.cos(self.theta_2))
         self.sigma = (2 - alpha) / (1 + (1 - c) * math.cos(self.theta_2) + c * math.cos(self.theta_1))
 
+    def transform_from_normalized_coordinates(self, x_hat, y_hat):
+        x = self.x_1 + (self.x_2 - self.x_1) * x_hat + (self.y_1 - self.y_2) * y_hat
+        y = self.y_1 + (self.y_2 - self.y_1) * x_hat + (self.x_2 - self.x_1) * y_hat
+        return (x, y)
+
+    def get_bezier_control_points(self):
+        point_1 = (0, 0)
+        tmp_1 = self.rho / (3 * self.tension_1)
+        point_2 = (
+            tmp_1 * math.cos(self.theta_1),
+            tmp_1 * math.sin(self.theta_1),
+        )
+        tmp_2 = self.sigma / (3 * self.tension_2)
+        point_3 = (
+            1 - tmp_2 * math.cos(self.theta_2),
+            tmp_2 * math.sin(self.theta_2),
+        )
+        point_4 = (1, 0)
+        points = [point_1, point_2, point_3, point_4]
+        return [
+            self.transform_from_normalized_coordinates(*x)
+            for x in points
+        ]
+
     def curve(self, t):
         x_hat = (
             self.rho / self.tension_1 * t * (1 - t) * (1 - t) * math.cos(self.theta_1)
@@ -48,5 +72,8 @@ if __name__ == "__main__":
         theta_2=math.pi * 0.25,
     )
     points = [spline.curve(i / 100) for i in range(100 + 1)]
+    plt.scatter(*zip(*points))
+
+    points = spline.get_bezier_control_points()
     plt.scatter(*zip(*points))
     plt.show()
