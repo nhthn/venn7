@@ -202,6 +202,19 @@ class VennDiagram:
             "regions": regions,
         }
 
+    def plot(self):
+        import matplotlib.pyplot as plt
+        import matplotlib.patches
+        import matplotlib.collections
+
+        fig, ax = plt.subplots()
+        polygons = [matplotlib.patches.Polygon(self.get_polygon(i)) for i in range(diagram.n)]
+        patches = matplotlib.collections.PatchCollection(polygons, alpha=0.2)
+        ax.add_collection(patches)
+        plt.xlim(-100, 100)
+        plt.ylim(-100, 100)
+        plt.show()
+
 DIAGRAMS = {
     "victoria": VennDiagram(7, "100000 110010 110111 101111 001101 000100"),
     "adelaide": VennDiagram(7, "10000 11010 11111 11111 01101 00100"),
@@ -212,25 +225,14 @@ DIAGRAMS = {
 }
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    import matplotlib.patches
-    import matplotlib.collections
-
+    import json
     diagrams_json = {}
-
     for name, diagram in DIAGRAMS.items():
         diagrams_json[name] = diagram.export_json()
 
-    import json
     with open("app/venn_diagrams.js", "w") as f:
         f.write("const venn_diagrams = ");
         json.dump(diagrams_json, f)
         f.write(";");
 
-    fig, ax = plt.subplots()
-    polygons = [matplotlib.patches.Polygon(diagram.get_polygon(i)) for i in range(diagram.n)]
-    patches = matplotlib.collections.PatchCollection(polygons, alpha=0.2)
-    ax.add_collection(patches)
-    plt.xlim(-100, 100)
-    plt.ylim(-100, 100)
-    plt.show()
+    DIAGRAMS["victoria"].plot()
