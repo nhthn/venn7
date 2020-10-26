@@ -8,7 +8,23 @@ const scale = 5;
 let i;
 
 for (i = 0; i < venn_diagram.n; i++) {
-    const polygon = draw.polygon(venn_diagram.spline)
+    const path_array = [];
+    path_array.push([
+        "M",
+        venn_diagram.bezier_control_points[0][0][0],
+        venn_diagram.bezier_control_points[0][0][1],
+    ]);
+    for (let spline of venn_diagram.bezier_control_points) {
+        path_array.push("C");
+        path_array.push(spline[1][0]);
+        path_array.push(spline[1][1]);
+        path_array.push(spline[2][0]);
+        path_array.push(spline[2][1]);
+        path_array.push(spline[3][0]);
+        path_array.push(spline[3][1]);
+    }
+
+    const polygon = draw.path(path_array)
         .fill({ color: "#036", opacity: 1 / 7 })
         .stroke({ opacity: 0, color: "#036", width: 1.5 / scale })
         .scale(scale, 0, 0)

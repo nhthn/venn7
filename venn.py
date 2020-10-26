@@ -148,6 +148,10 @@ class VennDiagram:
 
         return splines
 
+    def get_bezier_control_points(self, index=0):
+        """Get the shape of a single curve as a list of cubic Bezier control points."""
+        return [x.get_bezier_control_points() for x in self.get_splines(index=index)]
+
     def get_polygon(self, index=0):
         """Get the shape of a single curve as a polygon."""
         splines = self.get_splines(index)
@@ -158,7 +162,7 @@ class VennDiagram:
                 points.append(spline.curve(i / resolution))
         return points
 
-    def make_regions(self):
+    def get_regions(self):
         """Return a list of all polygons comprising the regions of this Venn diagram."""
         original_curve = shapely.geometry.Polygon(self.get_polygon())
         curves = []
@@ -194,12 +198,10 @@ class VennDiagram:
         return regions
 
     def export_json(self):
-        spline = self.get_polygon()
-        regions = self.make_regions()
         return {
             "n": self.n,
-            "spline": spline,
-            "regions": regions,
+            "bezier_control_points": self.get_bezier_control_points(),
+            "regions": self.get_regions(),
         }
 
     def plot(self):
