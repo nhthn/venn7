@@ -201,7 +201,6 @@ class VennDiagram:
         return {
             "n": self.n,
             "bezier_control_points": self.get_bezier_control_points(),
-            "regions": self.get_regions(),
         }
 
     def plot(self):
