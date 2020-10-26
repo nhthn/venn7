@@ -1,10 +1,10 @@
-const venn_diagram = venn_diagrams.victoria;
+const venn_diagram = venn_diagrams.adelaide;
 
 const canvas_size = 800;
 const canvas = document.createElement("canvas");
 canvas.setAttribute("width", canvas_size);
 canvas.setAttribute("height", canvas_size);
-document.body.appendChild(canvas);
+document.getElementById("canvas-container").appendChild(canvas);
 paper.setup(canvas);
 
 function get_curve_as_svg_path_string() {
@@ -27,6 +27,7 @@ function get_curve_as_svg_path_string() {
 function make_venn_curve(i) {
     const path = new paper.Path(get_curve_as_svg_path_string());
     path.scale(scale, new paper.Point(0, 0));
+    path.translate(new paper.Point(1, 0));
     path.rotate(360 / 7 * i, new paper.Point(0, 0));
     path.translate(new paper.Point(canvas_size / 2, canvas_size / 2));
     return path;
@@ -62,7 +63,7 @@ for (i = 0; i < venn_diagram.n; i++) {
     synths.push(synth);
 }
 
-for (i = 1; i < venn_diagram.regions.length; i++) {
+for (i = 1; i < Math.pow(2, venn_diagram.n); i++) {
     const sets = get_venn_sets(i, venn_diagram.n);
 
     let polygon = null;
