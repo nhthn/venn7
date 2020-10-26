@@ -7,12 +7,7 @@ canvas.setAttribute("height", canvas_size);
 document.body.appendChild(canvas);
 paper.setup(canvas);
 
-const curves = [];
-const scale = 5;
-
-let i;
-
-for (i = 0; i < venn_diagram.n; i++) {
+function get_curve_as_svg_path_string() {
     const path_array = [];
     path_array.push("M");
     path_array.push(venn_diagram.bezier_control_points[0][0][0]);
@@ -26,15 +21,26 @@ for (i = 0; i < venn_diagram.n; i++) {
         path_array.push(spline[3][0]);
         path_array.push(spline[3][1]);
     }
-    const svg_path_string = path_array.join(",");
+    return path_array.join(",");
+}
 
-    const path = new paper.Path(svg_path_string);
+function make_venn_curve(i) {
+    const path = new paper.Path(get_curve_as_svg_path_string());
+    path.scale(scale, new paper.Point(0, 0));
+    path.rotate(360 / 7 * i, new paper.Point(0, 0));
+    path.translate(new paper.Point(canvas_size / 2, canvas_size / 2));
+    return path;
+}
+
+const curves = [];
+const scale = 5;
+
+let i;
+for (i = 0; i < venn_diagram.n; i++) {
+    let path = make_venn_curve(i);
     path.strokeColor = null; // new paper.Color(0, 51 / 255, 102 / 255);
     path.strokeWidth = 1.5;
     path.fillColor = new paper.Color(0, 51 / 255, 102 / 255, 1 / 7);
-    path.scale(scale, new paper.Point(0, 0))
-    path.rotate(360 / 7 * i, new paper.Point(0, 0))
-    path.translate(new paper.Point(canvas_size / 2, canvas_size / 2));
     curves.push(path);
 }
 
@@ -57,24 +63,29 @@ for (i = 0; i < venn_diagram.n; i++) {
 }
 
 for (i = 1; i < venn_diagram.regions.length; i++) {
-    const path_array = [];
-    path_array.push("M");
-    path_array.push(venn_diagram.regions[i][0]);
-    path_array.push(venn_diagram.regions[i][1]);
-    for (let point of venn_diagram.regions[i]) {
-        path_array.push("L");
-        path_array.push(point[0]);
-        path_array.push(point[1]);
-    }
-    const svg_path_string = path_array.join(" ");
-
     const sets = get_venn_sets(i, venn_diagram.n);
-    const polygon = new paper.Path(svg_path_string);
+
+    let polygon = null;
+    let j;
+    for (j = 0; j < venn_diagram.n; j++) {
+        if (sets[j]) {
+            let curve = make_venn_curve(j);
+            if (polygon === null) {
+                polygon = curve;
+            } else {
+                polygon = polygon.intersect(curve);
+            }
+        }
+    }
+    for (j = 0; j < venn_diagram.n; j++) {
+        if (!sets[j]) {
+            let curve = make_venn_curve(j);
+            polygon = polygon.subtract(curve);
+        }
+    }
     polygon.fillColor = new paper.Color(0, 0, 0, 0.01);
     polygon.strokeColor = null;
     polygon.strokeWidth = 3;
-    polygon.scale(scale, new paper.Point(0, 0));
-    polygon.translate(new paper.Point(canvas_size / 2, canvas_size / 2));
 
     polygon.on("mouseenter", () => {
         polygon.strokeColor = new paper.Color(0, 0, 0);
