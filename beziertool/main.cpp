@@ -47,12 +47,13 @@ template <>
 struct adl_serializer<Bezier_curve_2> {
     static void to_json(json& j, const Bezier_curve_2& curve) {
         json control_points = json::array();
-        for (int i = 0; i < 4; i++) {
-            DoublePair point = std::make_pair(
-                CGAL::to_double(curve.control_point(i).x()),
-                CGAL::to_double(curve.control_point(i).y())
+        for (int i = 0; i < curve.number_of_control_points(); i++) {
+            auto exact_point = curve.control_point(i);
+            DoublePair inexact_point = std::make_pair(
+                CGAL::to_double(exact_point.x()),
+                CGAL::to_double(exact_point.y())
             );
-            control_points.push_back(point);
+            control_points.push_back(inexact_point);
         }
         j["control_points"] = control_points;
     }
@@ -68,14 +69,14 @@ struct adl_serializer<Bezier_curve_2> {
 
 class BezierPath {
 public:
-    BezierPath(std::vector<float> points)
+    BezierPath(std::vector<DoublePair> points)
         : m_points(points)
-        , m_num_beziers(points.size() / 6)
+        , m_num_beziers(points.size() / k_degree)
         , m_make_x_monotone(m_traits.make_x_monotone_2_object())
     {
         int size = points.size();
-        if (size % 6 != 0 || size < 6) {
-            throw std::runtime_error("Must have 6n entries, for n > 1.");
+        if (size % k_degree != 0 || size < k_degree) {
+            throw std::runtime_error("Must have a multiple of " + std::to_string(k_degree) + " entries.");
         }
 
         for (int i = 0; i < m_num_beziers; i++) {
@@ -124,8 +125,9 @@ public:
     Polygon_set m_polygonSet;
 
 private:
+    static constexpr int k_degree = 3;
     Traits_2 m_traits;
-    std::vector<float> m_points;
+    std::vector<DoublePair> m_points;
     int m_num_beziers;
     Traits_2::Make_x_monotone_2 m_make_x_monotone;
     std::list<X_monotone_curve_2> m_subcurvesList;
@@ -134,12 +136,11 @@ private:
     void makeBezierCurve(int index)
     {
         std::list<Point_2> points;
-        int offset = index * 6;
-        int n = m_points.size();
-        points.push_back(Point_2(m_points[offset + 0], m_points[offset + 1]));
-        points.push_back(Point_2(m_points[offset + 2], m_points[offset + 3]));
-        points.push_back(Point_2(m_points[offset + 4], m_points[offset + 5]));
-        points.push_back(Point_2(m_points[(offset + 6) % n], m_points[(offset + 7) % n]));
+        int offset = index * k_degree;
+        for (int i = 0; i < k_degree + 1; i++) {
+            DoublePair& point = m_points[(offset + i) % m_points.size()];
+            points.push_back(Point_2(point.first, point.second));
+        }
         Bezier_curve_2 curve(points.begin(), points.end());
 
         splitIntoSubcurvesAndAddToPolygon(curve);
@@ -168,10 +169,18 @@ private:
 
 int main()
 {
-    std::vector<float> points_1 = { 0, 0, 1, 3, 2, 1 };
-    BezierPath path_1(points_1);
+    std::vector<DoublePair> points_1 = {
+        std::make_pair(0, 0),
+        std::make_pair(1.23, 3),
+        std::make_pair(2, 1)
+    };
+    std::vector<DoublePair> points_2 = {
+        std::make_pair(1, 1.24),
+        std::make_pair(2.83, 2.1),
+        std::make_pair(3, 2)
+    };
 
-    std::vector<float> points_2 = { 1, 1, 2, 2, 3, 2 };
+    BezierPath path_1(points_1);
     BezierPath path_2(points_2);
 
     path_1.intersect(path_2);
