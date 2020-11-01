@@ -1,3 +1,7 @@
+#define JSON_USE_IMPLICIT_CONVERSIONS 0
+#include "json.hpp"
+using json = nlohmann::json;
+
 #include <CGAL/CORE_algebraic_number_traits.h>
 #include <CGAL/Cartesian.h>
 #include <CGAL/Arr_Bezier_curve_traits_2.h>
@@ -20,6 +24,47 @@ typedef CGAL::Gps_traits_2<Traits_2> Gps_traits_2;
 typedef Gps_traits_2::General_polygon_2 Polygon_2;
 typedef Gps_traits_2::General_polygon_with_holes_2 Polygon_with_holes_2;
 typedef CGAL::General_polygon_set_2<Gps_traits_2> Polygon_set;
+
+typedef std::pair<double, double> DoublePair;
+
+namespace nlohmann {
+
+template <>
+struct adl_serializer<DoublePair> {
+    static void to_json(json& j, const DoublePair& point) {
+        j["x"] = point.first;
+        j["y"] = point.second;
+    }
+
+    /*
+    static void from_json(const json& j, Point_2& point) {
+        // ...
+    }
+    */
+};
+
+template <>
+struct adl_serializer<Bezier_curve_2> {
+    static void to_json(json& j, const Bezier_curve_2& curve) {
+        json control_points = json::array();
+        for (int i = 0; i < 4; i++) {
+            DoublePair point = std::make_pair(
+                CGAL::to_double(curve.control_point(i).x()),
+                CGAL::to_double(curve.control_point(i).y())
+            );
+            control_points.push_back(point);
+        }
+        j["control_points"] = control_points;
+    }
+
+    /*
+    static void from_json(const json& j, Point_2& point) {
+        // ...
+    }
+    */
+};
+
+} // namespace nlohmann
 
 class BezierPath {
 public:
@@ -45,28 +90,35 @@ public:
         m_polygonSet.intersection(other.m_polygonSet);
     }
 
-    void printInfo() {
+    void toJson(json& result) {
+        json polygons_json = json::array();
         std::list<Polygon_with_holes_2> polygons;
         m_polygonSet.polygons_with_holes(std::back_inserter(polygons));
-        std::cout << "Polygons: " << m_polygonSet.number_of_polygons_with_holes() << std::endl;
         for (auto polygon : polygons) {
-            if (polygon.is_unbounded()) {
-                std::cout << "Unbounded" << std::endl;
-            }
-            std::cout << "Number of holes: " << polygon.number_of_holes() << std::endl;
-            // We ignore holes for this application.
+            json polygon_json = json::object();
+            polygon_json["unbounded"] = polygon.is_unbounded();
+            polygon_json["number_of_holes"] = polygon.number_of_holes();
+
+            json outer_boundary_json = json::array();
 
             Polygon_2 outer_boundary = polygon.outer_boundary();
-
             Polygon_2::Curve_const_iterator iterator;
             for (iterator = outer_boundary.curves_begin(); iterator != outer_boundary.curves_end(); iterator++) {
                 X_monotone_curve_2 x = *iterator;
                 Bezier_curve_2 supporting_curve = x.supporting_curve();
-                std::cout << "Curve: " << supporting_curve << std::endl;
-                std::cout << "Start: " << x.source() << std::endl;
-                std::cout << "End: " << x.target() << std::endl;
+
+                json curve_json = json::object();
+                curve_json["source"] = x.source().approximate();
+                curve_json["target"] = x.source().approximate();
+                curve_json["supporting_curve"] = supporting_curve;
+
+                outer_boundary_json.push_back(curve_json);
             }
+
+            polygon_json["outer_boundary"] = outer_boundary_json;
+            polygons_json.push_back(polygon_json);
         }
+        result["polygons"] = polygons_json;
     }
 
     Polygon_set m_polygonSet;
@@ -123,7 +175,9 @@ int main()
     BezierPath path_2(points_2);
 
     path_1.intersect(path_2);
-    path_1.printInfo();
+    json json_out = json::object();
+    path_1.toJson(json_out);
+    std::cout << json_out.dump() << std::endl;
 
     return 0;
 }
