@@ -1,3 +1,6 @@
+#include <iostream>
+#include <fstream>
+
 #define JSON_USE_IMPLICIT_CONVERSIONS 0
 #include "json.hpp"
 using json = nlohmann::json;
@@ -8,7 +11,6 @@ using json = nlohmann::json;
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Polygon_set_2.h>
 #include <CGAL/General_polygon_set_2.h>
-#include <iostream>
 
 typedef CGAL::CORE_algebraic_number_traits NtTraits;
 typedef NtTraits::Rational Rational;
@@ -36,11 +38,11 @@ struct adl_serializer<DoublePair> {
         j["y"] = point.second;
     }
 
-    /*
-    static void from_json(const json& j, Point_2& point) {
-        // ...
+    static void from_json(const json& j, DoublePair& point) {
+        point = std::make_pair(
+            j["x"].get<double>(), j["y"].get<double>()
+        );
     }
-    */
 };
 
 template <>
@@ -57,12 +59,6 @@ struct adl_serializer<Bezier_curve_2> {
         }
         j["control_points"] = control_points;
     }
-
-    /*
-    static void from_json(const json& j, Point_2& point) {
-        // ...
-    }
-    */
 };
 
 } // namespace nlohmann
@@ -169,16 +165,13 @@ private:
 
 int main()
 {
-    std::vector<DoublePair> points_1 = {
-        std::make_pair(0, 0),
-        std::make_pair(1.23, 3),
-        std::make_pair(2, 1)
-    };
-    std::vector<DoublePair> points_2 = {
-        std::make_pair(1, 1.24),
-        std::make_pair(2.83, 2.1),
-        std::make_pair(3, 2)
-    };
+    std::ifstream infile("curves.json");
+    json json_in;
+    infile >> json_in;
+
+    json curves = json_in["curves"];
+    auto points_1 = curves[0]["points"].get<std::vector<DoublePair>>();
+    auto points_2 = curves[1]["points"].get<std::vector<DoublePair>>();
 
     BezierPath path_1(points_1);
     BezierPath path_2(points_2);
@@ -186,6 +179,7 @@ int main()
     path_1.intersect(path_2);
     json json_out = json::object();
     path_1.toJson(json_out);
+
     std::cout << json_out.dump() << std::endl;
 
     return 0;
