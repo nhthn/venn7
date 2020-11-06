@@ -49,3 +49,18 @@ class TestCubicBezier:
             bezier(np.linspace(t_start, t_end, 10)),
             new_bezier(np.linspace(0, 1, 10)),
         )
+
+
+class TestMetafontSpline:
+
+    def test_basic(self):
+        spline = venn7.bezier.MetafontSpline([
+            (0.0, 1.0),
+            (1.0, 0.0),
+            (0.0, -1.0),
+            (-1.0, 0.0),
+        ])
+        np.testing.assert_allclose(
+            spline.beziers[0].control_points[0, :],
+            spline.points[0]
+        )

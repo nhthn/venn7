@@ -84,13 +84,38 @@ class CubicBezier:
 
 
 class MetafontBezier(CubicBezier):
+    """A cubic Bezier initialized using METAFONT-style specifications rather
+    than control points. A METAFONT Bezier is specified by its two endpoints,
+    the direction of the curve at the endpoints as angles, and two "tension"
+    parameters.
 
-    def __init__(self, x_1, y_1, x_2, y_2, theta_1, theta_2, tension_1=1.0, tension_2=1.0):
+    Angles are always given in radians. If relative_angles is True, the angles
+    are given relative to a line connecting the two endpoints, and are equivalent
+    to the variables "theta" and "phi" in the Hobby paper. Otherwise, the
+    angles are absolute.
+    """
+
+    def __init__(
+        self,
+        x_1,
+        y_1,
+        x_2,
+        y_2,
+        theta_1,
+        theta_2,
+        tension_1=1.0,
+        tension_2=1.0,
+        *,
+        relative_angles=False,
+    ):
         self.x_1, self.y_1 = x_1, y_1
         self.x_2, self.y_2 = x_2, y_2
 
-        base_angle = math.atan2(self.y_2 - self.y_1, self.x_2 - self.x_1)
-        self.theta_1, self.theta_2 = theta_1 - base_angle, base_angle - theta_2
+        if relative_angles:
+            self.theta_1, self.theta_2 = theta_1, theta_2
+        else:
+            base_angle = math.atan2(self.y_2 - self.y_1, self.x_2 - self.x_1)
+            self.theta_1, self.theta_2 = theta_1 - base_angle, base_angle - theta_2
         self.tension_1, self.tension_2 = tension_1, tension_2
 
         st1 = math.sin(self.theta_1)
@@ -124,20 +149,71 @@ class MetafontBezier(CubicBezier):
         return (x, y)
 
 
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
+class MetafontSpline:
 
-    spline = Spline(
-        x_1=0.0,
-        y_1=0.0,
-        x_2=0.0,
-        y_2=1.0,
-        theta_1=0.0,
-        theta_2=math.pi * 0.25,
-    )
-    points = [spline.curve(i / 100) for i in range(100 + 1)]
-    plt.scatter(*zip(*points))
+    def __init__(self, points):
+        self.points = np.array(points)
+        n = self.number_of_points = self.points.shape[0]
 
-    points = spline.get_bezier_control_points()
-    plt.scatter(*zip(*points))
-    plt.show()
+        displacements = np.roll(self.points, 1, axis=0) - self.points
+        distances = np.hypot(displacements[:, 1], displacements[:, 0])
+        angle = np.arctan2(displacements[:, 1], displacements[:, 0])
+        psi = np.roll(angle, -1) - angle
+        psi = (psi + np.pi) % (2 * np.pi) - np.pi
+
+        # system of equations:
+        # mock_curvature(phi[i], theta[i - 1], 1, 1) / distances[i - 1]
+        # - mock_curvature(theta[i], phi[i + 1], 1, 1) / distances[i] = 0
+        # phi[i] + theta[i] = -psi[i]
+
+        def theta(i):
+            return i % n
+        def phi(i):
+            return n + i % n
+        def d(i):
+            return distances[i % n]
+
+        A = np.zeros((n * 2, n * 2))
+        b = np.zeros((n * 2,))
+        row = 0
+        for i in range(n):
+            A[row, phi(i)] = 2 / d(i - 1)
+            A[row, theta(i - 1)] = -4 / d(i - 1)
+            A[row, theta(i)] = 2 / d(i) * -1
+            A[row, phi(i + 1)] = -4 / d(i) * -1
+            b[row] = 0
+            row += 1
+        for i in range(n):
+            A[row, phi(i)] = 1
+            A[row, theta(i)] = 1
+            b[row] = -psi[i]
+            row += 1
+
+        x = np.linalg.solve(A, b)
+        self.theta = x[:n]
+        self.phi = x[n:]
+
+        self.beziers = []
+        for i in range(n):
+            point_1 = self.points[i]
+            point_2 = self.points[(i + 1) % n]
+            bezier = MetafontBezier(
+                point_1[0],
+                point_1[1],
+                point_2[0],
+                point_2[1],
+                self.theta[i],
+                self.phi[(i + 1) % n],
+                relative_angles=True
+            )
+            self.beziers.append(bezier)
+
+    def plot(self):
+        import matplotlib.pyplot as plt
+        for bezier in self.beziers:
+            t = np.linspace(0, 1, 20, endpoint=False)
+            points = bezier(t)
+            x = points[:, 0]
+            y = points[:, 1]
+            plt.scatter(x, y)
+        plt.show()
