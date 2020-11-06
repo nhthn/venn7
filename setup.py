@@ -13,6 +13,6 @@ setuptools.setup(
     packages=setuptools.find_packages("src"),
     package_dir={"": "src"},
     python_requires=">=3.8",
-    install_requires=["numpy >= 1.19.4, < 1.20", "sympy"],
+    install_requires=["numpy >= 1.19.4, < 1.20", "sympy", "shapely"],
     extras_require=extras_require,
 )

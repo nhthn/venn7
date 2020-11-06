@@ -124,67 +124,6 @@ class MetafontBezier(CubicBezier):
         return (x, y)
 
 
-class Spline:
-
-    def __init__(self, x_1, y_1, x_2, y_2, theta_1, theta_2, tension_1=1.0, tension_2=1.0):
-        self.x_1, self.y_1 = x_1, y_1
-        self.x_2, self.y_2 = x_2, y_2
-
-        base_angle = math.atan2(self.y_2 - self.y_1, self.x_2 - self.x_1)
-        self.theta_1, self.theta_2 = theta_1 - base_angle, base_angle - theta_2
-        self.tension_1, self.tension_2 = tension_1, tension_2
-
-        a = math.sqrt(2)
-        b = 1 / 16
-        c = (3 - math.sqrt(5)) / 2
-        alpha = (
-            a
-            * (math.sin(self.theta_1) - b * math.sin(self.theta_2))
-            * (math.sin(self.theta_2) - b * math.sin(self.theta_1))
-            * (math.cos(self.theta_1) - math.cos(self.theta_2))
-        )
-        self.rho = (2 + alpha) / (1 + (1 - c) * math.cos(self.theta_1) + c * math.cos(self.theta_2))
-        self.sigma = (2 - alpha) / (1 + (1 - c) * math.cos(self.theta_2) + c * math.cos(self.theta_1))
-
-    def transform_from_normalized_coordinates(self, x_hat, y_hat):
-        x = self.x_1 + (self.x_2 - self.x_1) * x_hat + (self.y_1 - self.y_2) * y_hat
-        y = self.y_1 + (self.y_2 - self.y_1) * x_hat + (self.x_2 - self.x_1) * y_hat
-        return (x, y)
-
-    def get_bezier_control_points(self):
-        point_1 = (0, 0)
-        tmp_1 = self.rho / (3 * self.tension_1)
-        point_2 = (
-            tmp_1 * math.cos(self.theta_1),
-            tmp_1 * math.sin(self.theta_1),
-        )
-        tmp_2 = self.sigma / (3 * self.tension_2)
-        point_3 = (
-            1 - tmp_2 * math.cos(self.theta_2),
-            tmp_2 * math.sin(self.theta_2),
-        )
-        point_4 = (1, 0)
-        points = [point_1, point_2, point_3, point_4]
-        return [
-            self.transform_from_normalized_coordinates(*x)
-            for x in points
-        ]
-
-    def curve(self, t):
-        x_hat = (
-            self.rho / self.tension_1 * t * (1 - t) * (1 - t) * math.cos(self.theta_1)
-            + t * t * (1 - t) * (3 - self.sigma * math.cos(self.theta_2) / self.tension_2)
-            + t * t * t
-        )
-        y_hat = (
-            self.rho / self.tension_1 * t * (1 - t) * (1 - t) * math.sin(self.theta_1)
-            + t * t * (1 - t) * self.sigma * math.sin(self.theta_2) / self.tension_2
-        )
-        x = self.x_1 + (self.x_2 - self.x_1) * x_hat + (self.y_1 - self.y_2) * y_hat
-        y = self.y_1 + (self.y_2 - self.y_1) * x_hat + (self.x_2 - self.x_1) * y_hat
-        return (x, y)
-
-
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 

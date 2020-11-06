@@ -49,13 +49,3 @@ class TestCubicBezier:
             bezier(np.linspace(t_start, t_end, 10)),
             new_bezier(np.linspace(0, 1, 10)),
         )
-
-
-class TestSpline:
-
-    def test_basic(self):
-        args = [0.0, 0.0, 1.0, 0.0, 0.2, -0.5]
-        old = venn7.bezier.Spline(*args)
-        new = venn7.bezier.MetafontBezier(*args)
-        t = np.linspace(0, 1, 10)
-        np.testing.assert_allclose(np.array(old.curve(t)).T, new(t))

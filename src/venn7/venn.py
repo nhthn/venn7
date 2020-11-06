@@ -1,5 +1,5 @@
 import math
-from venn.bezier import Spline
+from venn7.bezier import MetafontBezier
 import shapely.geometry
 import shapely.affinity
 
@@ -143,14 +143,17 @@ class VennDiagram:
         for i in range(len(control_points)):
             x_1, y_1, theta_1 = control_points[i]
             x_2, y_2, theta_2 = control_points[(i + 1) % len(control_points)]
-            spline = Spline(x_1, y_1, x_2, y_2, theta_1, theta_2)
+            spline = MetafontBezier(x_1, y_1, x_2, y_2, theta_1, theta_2)
             splines.append(spline)
 
         return splines
 
     def get_bezier_control_points(self, index=0):
         """Get the shape of a single curve as a list of cubic Bezier control points."""
-        return [x.get_bezier_control_points() for x in self.get_splines(index=index)]
+        return [
+            [(x.control_points[i, 0], x.control_points[i, 1]) for i in range(4)]
+            for x in self.get_splines(index=index)
+        ]
 
     def get_polygon(self, index=0):
         """Get the shape of a single curve as a polygon."""
@@ -159,11 +162,12 @@ class VennDiagram:
         points = []
         for spline in splines:
             for i in range(resolution):
-                points.append(spline.curve(i / resolution))
+                points.append(spline(i / resolution))
         return points
 
-    def get_regions(self):
-        """Return a list of all polygons comprising the regions of this Venn diagram."""
+    def check_regions(self):
+        """Approximate this Venn diagram with polygons and use Shapely to check
+        that the diagram is valid."""
         original_curve = shapely.geometry.Polygon(self.get_polygon())
         curves = []
         for i in range(self.n):
@@ -192,10 +196,7 @@ class VennDiagram:
             for curve in curves_excluded:
                 region = region.difference(curve)
 
-            coordinates = [(x, y) for x, y in region.exterior.coords]
-            regions.append(coordinates)
-
-        return regions
+            assert not region.is_empty
 
     def export_json(self):
         return {
