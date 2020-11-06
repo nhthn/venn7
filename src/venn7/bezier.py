@@ -142,15 +142,6 @@ class CubicBezier:
 
         return CubicBezier(np.vstack([x, y]).T)
 
-    def plot(self):
-        import matplotlib.pyplot as plt
-        points = self(np.linspace(0.0, 1.0, 50))
-        plt.scatter(
-            np.squeeze(points[:, 0]),
-            np.squeeze(points[:, 1])
-        )
-        plt.show()
-
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
