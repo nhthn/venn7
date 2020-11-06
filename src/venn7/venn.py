@@ -1,5 +1,5 @@
 import math
-from spline import Spline
+from venn.bezier import Spline
 import shapely.geometry
 import shapely.affinity
 
