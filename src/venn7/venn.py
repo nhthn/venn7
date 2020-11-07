@@ -1,5 +1,5 @@
 import math
-from venn7.bezier import MetafontBezier
+from venn7.bezier import MetafontBezier, MetafontSpline
 import shapely.geometry
 import shapely.affinity
 
@@ -105,64 +105,60 @@ class VennDiagram:
             full_code += self.code
         return full_code
 
-    def get_spline_stage_1(self, index=0):
-        """Retrieve Cartesian coordinates and angles of each spline control point."""
-        angle_scaling = 1.2
-
-        unraveled_points = []
+    def get_spline(self, index=0):
+        grid_points = []
         row, column = 0, index * len(self.condensed_code)
         for i in range(self.n):
             for swap_rows in self.condensed_code:
                 if row + 1 in swap_rows:
-                    unraveled_points.append((row + 1, column, -0.25 * math.pi * angle_scaling))
+                    grid_points.append((row + 1, column))
                     row += 1
                 elif row in swap_rows:
-                    unraveled_points.append((row, column, 0.25 * math.pi * angle_scaling))
+                    grid_points.append((row, column))
                     row -= 1
                 column += 1
+
+        grid_points_2 = []
+        for i in range(len(grid_points)):
+            r0, c0 = grid_points[(i - 1) % len(grid_points)]
+            r1, c1 = grid_points[i]
+            r2, c2 = grid_points[(i + 1) % len(grid_points)]
+            if not (
+                (c1 - c0) % len(grid_points) == 1
+                and (c2 - c1) % len(grid_points) == 1
+                and r2 - r1 == r1 - r0
+            ):
+                grid_points_2.append((r1, c1))
+        grid_points = grid_points_2
 
         inner_radius = 30
         spacing = 5
 
         control_points = []
-        for row, column, angle in unraveled_points:
+        for row, column in grid_points:
             radius = inner_radius + spacing * row
             theta = column * 2 * math.pi / (self.n * len(self.condensed_code))
-            new_angle = angle + theta + math.pi * 0.5
             x = radius * math.cos(theta)
             y = radius * math.sin(theta)
-            control_points.append((x, y, new_angle))
+            control_points.append((x, y))
 
-        return control_points
-
-    def get_splines(self, index=0):
-        """Get the shape of a single curve as a list of Splines."""
-        control_points = self.get_spline_stage_1(index=index)
-
-        splines = []
-        for i in range(len(control_points)):
-            x_1, y_1, theta_1 = control_points[i]
-            x_2, y_2, theta_2 = control_points[(i + 1) % len(control_points)]
-            spline = MetafontBezier(x_1, y_1, x_2, y_2, theta_1, theta_2)
-            splines.append(spline)
-
-        return splines
+        return MetafontSpline(control_points)
 
     def get_bezier_control_points(self, index=0):
         """Get the shape of a single curve as a list of cubic Bezier control points."""
         return [
             [(x.control_points[i, 0], x.control_points[i, 1]) for i in range(4)]
-            for x in self.get_splines(index=index)
+            for x in self.get_spline(index=index).beziers
         ]
 
     def get_polygon(self, index=0):
         """Get the shape of a single curve as a polygon."""
-        splines = self.get_splines(index)
+        spline = self.get_spline(index)
         resolution = 10
         points = []
-        for spline in splines:
+        for bezier in spline.beziers:
             for i in range(resolution):
-                points.append(spline(i / resolution))
+                points.append(bezier(i / resolution))
         return points
 
     def check_regions(self):

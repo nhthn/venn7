@@ -161,10 +161,19 @@ class MetafontSpline:
         psi = np.roll(angle, -1) - angle
         psi = (psi + np.pi) % (2 * np.pi) - np.pi
 
+        # In the Hobby paper, tension_after = tau, tension_before = tau with overline.
+        self.tension_after = np.ones(n)
+        self.tension_before = np.ones(n)
+
         # system of equations:
-        # mock_curvature(phi[i], theta[i - 1], 1, 1) / distances[i - 1]
-        # - mock_curvature(theta[i], phi[i + 1], 1, 1) / distances[i] = 0
+        # mock_curvature(phi[i], theta[i - 1], tension_before[i], tension_before[i - 1]) / distances[i - 1]
+        # - mock_curvature(theta[i], phi[i + 1], tension_after[i], tension_before[i + 1]) / distances[i] = 0
         # phi[i] + theta[i] = -psi[i]
+
+        # mock_curvature(theta, phi, tension_after, tension_before)
+        # = tension_after^2 (2 * (theta + phi) / tension_before - 6 * theta)
+        # = tension_after^2 * (2 / tension_before - 6) theta
+        # + tension_after^2 * (2 / tension_before) * phi
 
         def theta(i):
             return i % n
@@ -176,11 +185,15 @@ class MetafontSpline:
         A = np.zeros((n * 2, n * 2))
         b = np.zeros((n * 2,))
         row = 0
+
+        def stamp_mock_curvature(theta, phi, tension_before, tension_after, scale):
+            tmp = tension_after * tension_after
+            A[row, theta] = tmp * (2 / tension_before - 6) * scale
+            A[row, phi] = tmp * 2 / tension_before * scale
+
         for i in range(n):
-            A[row, phi(i)] = 2 / d(i - 1)
-            A[row, theta(i - 1)] = -4 / d(i - 1)
-            A[row, theta(i)] = 2 / d(i) * -1
-            A[row, phi(i + 1)] = -4 / d(i) * -1
+            stamp_mock_curvature(phi(i), theta(i - 1), 1, 1, scale=1 / d(i - 1))
+            stamp_mock_curvature(theta(i), phi(i + 1), 1, 1, scale=-1 / d(i))
             b[row] = 0
             row += 1
         for i in range(n):
