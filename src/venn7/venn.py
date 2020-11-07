@@ -131,6 +131,15 @@ class VennDiagram:
                 grid_points_2.append((r1, c1))
         grid_points = grid_points_2
 
+        tensions = []
+        for i in range(len(grid_points)):
+            r1, c1 = grid_points[i]
+            r2, c2 = grid_points[(i + 1) % len(grid_points)]
+            if abs(r1 - r2) == abs(c1 - c2):
+                tensions.append(1.8)
+            else:
+                tensions.append(1.0)
+
         inner_radius = 30
         spacing = 5
 
@@ -142,7 +151,7 @@ class VennDiagram:
             y = radius * math.sin(theta)
             control_points.append((x, y))
 
-        return MetafontSpline(control_points)
+        return MetafontSpline(control_points, tensions)
 
     def get_bezier_control_points(self, index=0):
         """Get the shape of a single curve as a list of cubic Bezier control points."""

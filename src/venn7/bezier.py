@@ -151,7 +151,7 @@ class MetafontBezier(CubicBezier):
 
 class MetafontSpline:
 
-    def __init__(self, points):
+    def __init__(self, points, tensions=None):
         self.points = np.array(points)
         n = self.number_of_points = self.points.shape[0]
 
@@ -162,8 +162,12 @@ class MetafontSpline:
         psi = (psi + np.pi) % (2 * np.pi) - np.pi
 
         # In the Hobby paper, tension_after = tau, tension_before = tau with overline.
-        self.tension_after = np.ones(n)
-        self.tension_before = np.ones(n)
+        if tensions is None:
+            self.tension_after = np.ones(n)
+            self.tension_before = np.ones(n)
+        else:
+            self.tension_after = tensions
+            self.tension_before = np.roll(tensions, 1)
 
         # system of equations:
         # mock_curvature(phi[i], theta[i - 1], tension_before[i], tension_before[i - 1]) / distances[i - 1]
@@ -192,8 +196,20 @@ class MetafontSpline:
             A[row, phi] = tmp * 2 / tension_before * scale
 
         for i in range(n):
-            stamp_mock_curvature(phi(i), theta(i - 1), 1, 1, scale=1 / d(i - 1))
-            stamp_mock_curvature(theta(i), phi(i + 1), 1, 1, scale=-1 / d(i))
+            stamp_mock_curvature(
+                phi(i),
+                theta(i - 1),
+                self.tension_before[i],
+                self.tension_after[(i - 1) % n],
+                scale=1 / d(i - 1)
+            )
+            stamp_mock_curvature(
+                theta(i),
+                phi(i + 1),
+                self.tension_after[i],
+                self.tension_before[(i + 1) % n],
+                scale=-1 / d(i)
+            )
             b[row] = 0
             row += 1
         for i in range(n):
