@@ -1,14 +1,33 @@
+import json
 import math
+import subprocess
 import numpy as np
 import numpy.polynomial as polynomial
 import sympy
 import sympy.polys.polytools
 
 
+class DegenerateBezierError(Exception):
+    pass
+
+
 class CubicBezier:
 
     def __init__(self, control_points):
         self.control_points = np.array(control_points)
+
+    @classmethod
+    def from_beziertool_json(cls, bezier_json):
+        supporting_curve_json = bezier_json["supporting_curve"]
+        supporting_curve = cls([
+            (point["x"], point["y"])
+            for point in supporting_curve_json["control_points"]
+        ])
+        source = np.array((bezier_json["source"]["x"], bezier_json["source"]["y"]))
+        target = np.array((bezier_json["target"]["x"], bezier_json["target"]["y"]))
+        if np.allclose(source, target):
+            raise DegenerateBezierError
+        return supporting_curve.clip(source, target)
 
     @staticmethod
     def f(t, x0, x1, x2, x3):
@@ -35,8 +54,17 @@ class CubicBezier:
         roots = g.roots()
         if len(roots) == 0:
             raise RuntimeError("No roots")
-        valid_roots = roots[np.isreal(roots) & (0.0 <= roots <= 1.0)]
-        if len(roots) == 0:
+        valid_roots = [
+            x
+            for x in roots
+            if 0 <= np.imag(x) < 1e-16
+            if 0 <= np.real(x) <= 1
+        ]
+        print(x)
+        print(self.control_points)
+        print(roots)
+        print(valid_roots)
+        if len(valid_roots) == 0:
             raise RuntimeError("No valid roots")
         if len(valid_roots) == 2:
             raise RuntimeError("Too many roots: {len(valid_roots)}")
@@ -81,6 +109,15 @@ class CubicBezier:
         y = np.linalg.solve(lhs_matrix, rhs_matrix @ self.control_points[:, 1])
 
         return CubicBezier(np.vstack([x, y]).T)
+
+    def as_json(self):
+        points_json = []
+        for i in range(3):
+            points_json.append({
+                "x": self.control_points[i, 0],
+                "y": self.control_points[i, 1]
+            })
+        return points_json
 
 
 class MetafontBezier(CubicBezier):
@@ -149,7 +186,55 @@ class MetafontBezier(CubicBezier):
         return (x, y)
 
 
-class MetafontSpline:
+class BezierPath:
+
+    def __init__(self, beziers):
+        self.beziers = beziers
+
+    @classmethod
+    def from_beziertool_json(cls, path_json):
+        beziers = []
+        for x in path_json["outer_boundary"]:
+            try:
+                beziers.append(CubicBezier.from_beziertool_json(x))
+            except DegenerateBezierError:
+                pass
+        return cls(beziers)
+
+    def plot(self):
+        import matplotlib.pyplot as plt
+        for bezier in self.beziers:
+            t = np.linspace(0, 1, 20, endpoint=False)
+            points = bezier(t)
+            x = points[:, 0]
+            y = points[:, 1]
+            plt.scatter(x, y)
+        plt.show()
+
+    def as_json(self):
+        result = []
+        for bezier in self.beziers:
+            result += bezier.as_json()
+        return {"points": result}
+
+    def intersect(self, other):
+        json_ = {
+            "curves": [
+                self.as_json(),
+                other.as_json(),
+            ],
+        }
+        with open("curves.json", "w") as f:
+            json.dump(json_, f)
+        process = subprocess.run(
+            ["beziertool/beziertool", "curves.json"],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        result = json.loads(process.stdout)
+        return BezierPath.from_beziertool_json(result["polygons"][0])
+
+class MetafontSpline(BezierPath):
 
     def __init__(self, points, tensions=None):
         self.points = np.array(points)
@@ -222,7 +307,7 @@ class MetafontSpline:
         self.theta = x[:n]
         self.phi = x[n:]
 
-        self.beziers = []
+        beziers = []
         for i in range(n):
             point_1 = self.points[i]
             point_2 = self.points[(i + 1) % n]
@@ -235,14 +320,6 @@ class MetafontSpline:
                 self.phi[(i + 1) % n],
                 relative_angles=True
             )
-            self.beziers.append(bezier)
+            beziers.append(bezier)
 
-    def plot(self):
-        import matplotlib.pyplot as plt
-        for bezier in self.beziers:
-            t = np.linspace(0, 1, 20, endpoint=False)
-            points = bezier(t)
-            x = points[:, 0]
-            y = points[:, 1]
-            plt.scatter(x, y)
-        plt.show()
+        super().__init__(beziers)

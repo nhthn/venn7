@@ -1,2 +1,2 @@
 all:
-	g++ -std=c++17 main.cpp -lmpfr -lgmp
+	g++ -o beziertool -std=c++17 main.cpp -lmpfr -lgmp

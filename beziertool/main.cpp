@@ -106,7 +106,7 @@ public:
 
                 json curve_json = json::object();
                 curve_json["source"] = x.source().approximate();
-                curve_json["target"] = x.source().approximate();
+                curve_json["target"] = x.target().approximate();
                 curve_json["supporting_curve"] = supporting_curve;
 
                 outer_boundary_json.push_back(curve_json);
@@ -163,9 +163,14 @@ private:
     }
 };
 
-int main()
+int main(int argc, char* argv[])
 {
-    std::ifstream infile("curves.json");
+    if (argc == 1) {
+        std::cerr << "Usage: beziertool [IN_FILE]" << std::endl;
+        exit(1);
+    }
+
+    std::ifstream infile(argv[1]);
     json json_in;
     infile >> json_in;
 
