@@ -1,5 +1,7 @@
+import logging
 import math
 import numpy as np
+import venn7.bezier
 from venn7.bezier import MetafontBezier
 from venn7.bezier import MetafontSpline
 from venn7.bezier import BezierPath
@@ -154,7 +156,13 @@ class VennDiagram:
             y = radius * math.sin(theta)
             control_points.append((x, y))
 
-        return MetafontSpline(control_points, tensions)
+        spline = MetafontSpline(control_points, tensions)
+
+        # Fudge factor to avoid perfectly coincident endpoints, which cause
+        # issues for CGAL.
+        spline = spline.translate(np.array([1e-3, 0]))
+
+        return spline
 
     def get_polygon(self, index=0):
         """Get the shape of a single curve as a polygon."""
@@ -202,12 +210,9 @@ class VennDiagram:
     def get_regions(self):
         curve_0 = self.get_spline()
         curves = [curve_0]
-        for i in range(self.n):
+        for i in range(1, self.n):
             theta = i * 2 * np.pi / self.n
-            matrix = np.array([
-                [np.cos(theta), -np.sin(theta)],
-                [np.sin(theta), np.cos(theta)],
-            ])
+            matrix = venn7.bezier.get_rotation_matrix(theta)
             curve = curve_0.transform(matrix)
             curves.append(curve)
 
@@ -223,6 +228,7 @@ class VennDiagram:
                 else:
                     curves_included.append(curves[i])
                 tmp_rank //= 2
+            logging.info(f"Computing region of rank {rank}.")
             region = BezierPath.intersect_and_subtract(
                 curves_included,
                 curves_excluded,

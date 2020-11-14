@@ -28,6 +28,9 @@ class CubicBezier:
     def transform(self, matrix):
         return CubicBezier(self.control_points @ matrix.T)
 
+    def translate(self, displacement):
+        return CubicBezier(self.control_points + displacement[np.newaxis, :])
+
     @classmethod
     def from_beziertool_json(cls, bezier_json):
         supporting_curve_json = bezier_json["supporting_curve"]
@@ -185,6 +188,13 @@ class BezierPath:
         new_beziers = []
         for bezier in self.beziers:
             new_bezier = bezier.transform(matrix)
+            new_beziers.append(new_bezier)
+        return BezierPath(new_beziers)
+
+    def translate(self, displacement):
+        new_beziers = []
+        for bezier in self.beziers:
+            new_bezier = bezier.translate(displacement)
             new_beziers.append(new_bezier)
         return BezierPath(new_beziers)
 
