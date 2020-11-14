@@ -1,5 +1,8 @@
 import math
-from venn7.bezier import MetafontBezier, MetafontSpline
+import numpy as np
+from venn7.bezier import MetafontBezier
+from venn7.bezier import MetafontSpline
+from venn7.bezier import BezierPath
 import shapely.geometry
 import shapely.affinity
 
@@ -153,13 +156,6 @@ class VennDiagram:
 
         return MetafontSpline(control_points, tensions)
 
-    def get_bezier_control_points(self, index=0):
-        """Get the shape of a single curve as a list of cubic Bezier control points."""
-        return [
-            [(x.control_points[i, 0], x.control_points[i, 1]) for i in range(4)]
-            for x in self.get_spline(index=index).beziers
-        ]
-
     def get_polygon(self, index=0):
         """Get the shape of a single curve as a polygon."""
         spline = self.get_spline(index)
@@ -203,10 +199,43 @@ class VennDiagram:
 
             assert not region.is_empty
 
+    def get_regions(self):
+        curve_0 = self.get_spline()
+        curves = [curve_0]
+        for i in range(self.n):
+            theta = i * 2 * np.pi / self.n
+            matrix = np.array([
+                [np.cos(theta), -np.sin(theta)],
+                [np.sin(theta), np.cos(theta)],
+            ])
+            curve = curve_0.transform(matrix)
+            curves.append(curve)
+
+        # Region at index 0 is an empty set.
+        regions = [[]]
+        for rank in range(1, 2 ** self.n):
+            curves_included = []
+            curves_excluded = []
+            tmp_rank = rank
+            for i in range(self.n):
+                if tmp_rank % 2 == 0:
+                    curves_excluded.append(curves[i])
+                else:
+                    curves_included.append(curves[i])
+                tmp_rank //= 2
+            region = BezierPath.intersect_and_subtract(
+                curves_included,
+                curves_excluded,
+            )
+            regions.append(region)
+        return regions
+
+
     def export_json(self):
         return {
             "n": self.n,
-            "bezier_control_points": self.get_bezier_control_points(),
+            "curve": self.get_spline().as_svg_path(),
+            "regions": [region.as_svg_path() for region in self.get_regions()],
         }
 
     def plot(self):

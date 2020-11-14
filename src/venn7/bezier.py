@@ -6,6 +6,13 @@ import numpy.polynomial as polynomial
 import sympy
 import sympy.polys.polytools
 
+def get_rotation_matrix(theta):
+    matrix = np.array([
+        [np.cos(theta), -np.sin(theta)],
+        [np.sin(theta), np.cos(theta)],
+    ])
+    return matrix
+
 
 class DegenerateBezierError(Exception):
     pass
@@ -15,6 +22,11 @@ class CubicBezier:
 
     def __init__(self, control_points):
         self.control_points = np.array(control_points)
+        if self.control_points.shape != (4, 2):
+            raise ValueError("Wrong shape, expected (4, 2)")
+
+    def transform(self, matrix):
+        return CubicBezier(self.control_points @ matrix.T)
 
     @classmethod
     def from_beziertool_json(cls, bezier_json):
@@ -169,6 +181,13 @@ class BezierPath:
     def __init__(self, beziers):
         self.beziers = beziers
 
+    def transform(self, matrix):
+        new_beziers = []
+        for bezier in self.beziers:
+            new_bezier = bezier.transform(matrix)
+            new_beziers.append(new_bezier)
+        return BezierPath(new_beziers)
+
     @classmethod
     def from_beziertool_json(cls, path_json):
         beziers = []
@@ -195,12 +214,24 @@ class BezierPath:
             result += bezier.as_json()
         return {"points": result}
 
+    def as_svg_path(self):
+        parts = []
+        parts.append("M")
+        parts.extend(self.beziers[0].control_points[0, :])
+        for bezier in self.beziers:
+            parts.append("C")
+            for i in range(1, 4):
+                parts.append(bezier.control_points[i, :])
+        return " ".join([str(x) for x in parts])
+
     def intersect(self, other):
+        return BezierPath.intersect_and_subtract([self, other], [])
+
+    @staticmethod
+    def intersect_and_subtract(intersection_curves, subtraction_curves):
         json_ = {
-            "curves": [
-                self.as_json(),
-                other.as_json(),
-            ],
+            "intersection_curves": [x.as_json() for x in intersection_curves],
+            "subtraction_curves": [x.as_json() for x in subtraction_curves],
         }
         with open("curves.json", "w") as f:
             json.dump(json_, f)
@@ -211,6 +242,7 @@ class BezierPath:
         )
         result = json.loads(process.stdout)
         return BezierPath.from_beziertool_json(result["polygons"][0])
+
 
 class MetafontSpline(BezierPath):
 

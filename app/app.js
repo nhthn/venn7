@@ -1,4 +1,4 @@
-const venn_diagram = venn_diagrams.adelaide;
+const venn_diagram = venn_diagrams[location.hash.substring(1) || "adelaide"];
 
 const canvas_size = 800;
 const canvas = document.createElement("canvas");
@@ -7,25 +7,8 @@ canvas.setAttribute("height", canvas_size);
 document.getElementById("canvas-container").appendChild(canvas);
 paper.setup(canvas);
 
-function get_curve_as_svg_path_string() {
-    const path_array = [];
-    path_array.push("M");
-    path_array.push(venn_diagram.bezier_control_points[0][0][0]);
-    path_array.push(venn_diagram.bezier_control_points[0][0][1]);
-    for (let spline of venn_diagram.bezier_control_points) {
-        path_array.push("C");
-        path_array.push(spline[1][0]);
-        path_array.push(spline[1][1]);
-        path_array.push(spline[2][0]);
-        path_array.push(spline[2][1]);
-        path_array.push(spline[3][0]);
-        path_array.push(spline[3][1]);
-    }
-    return path_array.join(",");
-}
-
 function make_venn_curve(i) {
-    const path = new paper.Path(get_curve_as_svg_path_string());
+    const path = new paper.Path(venn_diagram.curve);
     path.scale(scale, new paper.Point(0, 0));
     path.translate(new paper.Point(1, 0));
     path.rotate(360 / 7 * i, new paper.Point(0, 0));

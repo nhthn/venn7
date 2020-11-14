@@ -87,6 +87,10 @@ public:
         m_polygonSet.intersection(other.m_polygonSet);
     }
 
+    void subtract(BezierPath& other) {
+        m_polygonSet.difference(other.m_polygonSet);
+    }
+
     void toJson(json& result) {
         json polygons_json = json::array();
         std::list<Polygon_with_holes_2> polygons;
@@ -166,6 +170,11 @@ private:
     }
 };
 
+BezierPath deserializeBezierPath(const json& j)
+{
+    return BezierPath(j["points"].get<std::vector<DoublePair>>());
+}
+
 int main(int argc, char* argv[])
 {
     if (argc == 1) {
@@ -177,16 +186,21 @@ int main(int argc, char* argv[])
     json json_in;
     infile >> json_in;
 
-    json curves = json_in["curves"];
-    auto points_1 = curves[0]["points"].get<std::vector<DoublePair>>();
-    auto points_2 = curves[1]["points"].get<std::vector<DoublePair>>();
+    json intersection_curves = json_in["intersection_curves"];
+    json subtraction_curves = json_in["subtraction_curves"];
 
-    BezierPath path_1(points_1);
-    BezierPath path_2(points_2);
+    BezierPath result = deserializeBezierPath(intersection_curves[0]);
+    for (auto path_json : intersection_curves) {
+        BezierPath path = deserializeBezierPath(path_json);
+        result.intersect(path);
+    }
+    for (auto path_json : subtraction_curves) {
+        BezierPath path = deserializeBezierPath(path_json);
+        result.subtract(path);
+    }
 
-    path_1.intersect(path_2);
     json json_out = json::object();
-    path_1.toJson(json_out);
+    result.toJson(json_out);
 
     std::cout << json_out.dump() << std::endl;
 
