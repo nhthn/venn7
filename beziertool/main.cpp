@@ -108,6 +108,9 @@ public:
                 curve_json["source"] = x.source().approximate();
                 curve_json["target"] = x.target().approximate();
                 curve_json["supporting_curve"] = supporting_curve;
+                auto parameter_range = x.parameter_range();
+                curve_json["t_source"] = parameter_range.first;
+                curve_json["t_target"] = parameter_range.second;
 
                 outer_boundary_json.push_back(curve_json);
             }

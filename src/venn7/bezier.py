@@ -23,11 +23,11 @@ class CubicBezier:
             (point["x"], point["y"])
             for point in supporting_curve_json["control_points"]
         ])
-        source = np.array((bezier_json["source"]["x"], bezier_json["source"]["y"]))
-        target = np.array((bezier_json["target"]["x"], bezier_json["target"]["y"]))
-        if np.allclose(source, target):
+        t_source = bezier_json["t_source"]
+        t_target = bezier_json["t_target"]
+        if np.allclose(t_source, t_target):
             raise DegenerateBezierError
-        return supporting_curve.clip(source, target)
+        return supporting_curve.clip(t_source, t_target)
 
     @staticmethod
     def f(t, x0, x1, x2, x3):
@@ -44,39 +44,9 @@ class CubicBezier:
         y = self.f(t, *self.control_points[:, 1])
         return np.squeeze(np.vstack([x, y]).T)
 
-    def get_t_from_x(self, x):
-        """Draw a vertical line through the Bezier at the given x-coordinate
-        and find one 0 <= t <= 1 where the Bezier intersects it. Raise an
-        error if no roots, or more than one root, are found."""
-        t = polynomial.Polynomial([0, 1])
-        f = self.f(t, *self.control_points[:, 0])
-        g = f - x
-        roots = g.roots()
-        if len(roots) == 0:
-            raise RuntimeError("No roots")
-        valid_roots = [
-            x
-            for x in roots
-            if 0 <= np.imag(x) < 1e-16
-            if 0 <= np.real(x) <= 1
-        ]
-        print(x)
-        print(self.control_points)
-        print(roots)
-        print(valid_roots)
-        if len(valid_roots) == 0:
-            raise RuntimeError("No valid roots")
-        if len(valid_roots) == 2:
-            raise RuntimeError("Too many roots: {len(valid_roots)}")
-        return valid_roots[0]
-
-    def clip(self, source, target):
-        """Return a new CubicBezier that starts at the given source point and
-        ends at the given target point. The points are assumed to be on the
-        curve."""
-        t_1 = self.get_t_from_x(source[0])
-        t_2 = self.get_t_from_x(target[0])
-
+    def clip(self, t_1, t_2):
+        """Return a new CubicBezier that is the result of truncating this one's
+        parameter to the interval [t_1, t_2]."""
         c = [sympy.Symbol(f"c{i}") for i in range(4)]
         t = sympy.Symbol("t")
 
@@ -86,18 +56,26 @@ class CubicBezier:
         # if their coefficients are equal. Identify the linear combinations of
         # c and c' variables in the coefficients of t-terms, and produce the
         # matrix equation L c' = R c which can be solved with a linear systems
-        # solver.
+        # solver. Two 4x4 systems must be solved, one for x-coordinates and
+        # one for y-coordinates.
 
         # In SymPy, polynomials cannot have variables in coefficients, so the
         # polynomial in t is treated as a multivariate polynomial. When using
         # coeff_monomial to exact coefficients, we have to treat c-variables
-        # as dependent variable son the polynomial.
+        # as dependent variables on the polynomial.
 
         rhs_poly = sympy.poly(self.f(t_1 + t * (t_2 - t_1), *c))
         rhs_matrix = np.zeros((4, 4))
         for i in range(4):
             for j in range(4):
                 rhs_matrix[i, j] = rhs_poly.coeff_monomial(t ** i * c[j])
+
+        # Note: lhs_matrix is constant, and equal to:
+        #      1  0  0  0
+        #     -3  3  0  0
+        #      3 -6  3  0
+        #     -1  3 -3  1
+        # but it's more fun to derive from first principles.
 
         lhs_poly = sympy.poly(self.f(t, *c))
         lhs_matrix = np.zeros((4, 4))
