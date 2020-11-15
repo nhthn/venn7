@@ -106,38 +106,9 @@ For this, we turn to a spline algorithm developed by Knuth and Hobby originally 
 
 Here we have some artistic license to arbitrarily add new points and change constraints of the splines to produce pretty curves.
 
-### Geometric validation
+### Boolean operations on Bezier curves
 
-In the process of spline interpolation, it is technically possible for the curves introduced by interpolation to disrupt the topology of the Venn diagram. To make sure this doesn't happen, we add an extra validation layer where the curves are converted to reasonably hi-res polygons. The Shapely library is used to compute Boolean operations on these polygons to ensure that they produce a valid diagram, i.e. all 127 regions are nonempty and each one is a connected shape.
-
-### Boolean operations on Bezier curves using CGAL
-
-We need to produce path data for the 127 regions of the Venn diagram by performing Boolean operations on the Bezier curves. I couldn't find any well-supported Python library that does this. I also tried Paper.js's built-in Boolean operations on SVG-type paths, but ran into bugs. Alternatives seem sparse, and it looked difficult to roll my own.
-
-I was pointed to CGAL, an enormous C++ library of computational geometry algorithms, which contains a robust and well-developed library for Boolean operations on curves (Bezier and otherwise). My review of CGAL: it's an excellent work of software, but intimidating to use due to its degree of mathematical rigor.
-
-Before it can do any Booleans, CGAL requires us to first split each Bezier curve into one or more "weakly x-monotone curves," defined as a curve that either passes the vertical line test or is itself a vertical line segment. For example, a Bezier curve that doubles back on itself horizontally would need to be split into two or more such subcurves. CGAL provides a `Make_x_monotone_2` object that does this, but you have to invoke it yourself.
-
-I prefer to stick with Python for scientific computing, so I keep the C++ application minimal and talk to it via JSON.
-
-CGAL knows immediately if a region is empty or disconnected, so we can also use CGAL to verify once more that the Venn diagram is valid. Certainly doesn't hurt.
-
-### Normalizing clipped Bezier curves
-
-When computing Booleans on Bezier curves, CGAL does not actually produce new control points. Instead, it retains the old Bezier curve and defines "source" and "target" points to which the curve is truncated, in an object called `Bezier_x_monotone_2`. Maybe I missed it, but I couldn't find built-in CGAL functionality to convert a clipped Bezier curve into a standard Bezier curve that would be readable by an SVG path.
-
-Suppose we have a `Bezier_x_monotone_2` whose "supporting curve" (i.e. the original prior to clipping) is given by control points `P0, P1, P2, P3`, which is clipped to the points `S,T`. Let `f(t, P0, P1, P2, P3)` denote the function of a cubic Bezier curve evaluated at time `0 <= t <= 1`, which is a cubic polynomial in `t`. We wish to find the new control points `P0', P1', P2', P3'` of the clipped Bezier curve.
-
-The first step is to find `0 <= t_S <= 1` and `0 <= t_T <= 1` such that
-
-    f(t_S, P0, P1, P2, P3) = S
-    f(t_T, P0, P1, P2, P3) = T.
-
-Luckily CGAL gives us a built-in function to compute them: `Bezier_x_monotone_2::parameter_range()`. Knowing `t_T` and `t_S` gives us the equality:
-
-    f(t, P0', P1', P2', P3') = f(t_S + (t_T - t_S) * t, P0, P1, P2, P3).
-
-If we consider the x-coordinates only, this is the statement that two cubic polynomials in `t` are equal, so their four coefficients must be equal. This lets us set up a system of four linear equations relating the x-coordinates of `Pi` to the x-coordinates of `Pi'`. The same is true of the y-coordinates. Solving two 4x4 linear systems then allows us to compute the new control points. This completes the algorithm for clipping a Bezier curve.
+We need to produce path data for the 127 regions of the Venn diagram by performing Boolean operations on the Bezier curves. I couldn't find any well-supported Python library that does this. I experimented with CGAL, but ran into mysterious "precondition errors" that I couldn't resolve. Paper.js's built-in Boolean operations seemed to work OK. I invoke Paper.js using Node as a subprocess.
 
 ### Web app
 
