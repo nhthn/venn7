@@ -1,3 +1,37 @@
+const COLOR_SCHEMES = {
+    victoria: {
+        center: "#034488",
+        foreground: "#111111",
+        background: "#e0f0ff"
+    },
+    adelaide: {
+        center: "#ffffff",
+        foreground: "#ffffff",
+        background: "#440013"
+    },
+    massey: {
+        center: "#fff0ef",
+        foreground: "#888888",
+        background: "#131313"
+    },
+    manawatu: {
+        center: "#000000",
+        foreground: "#000000",
+        background: "#ffefff"
+    },
+    palmerston_north: {
+        center: "#003300",
+        foreground: "#000000",
+        background: "#aaffaa"
+    },
+    hamilton: {
+        center: "#330033",
+        foreground: "#000000",
+        background: "#ffeef8"
+    },
+};
+COLOR_SCHEMES.default = COLOR_SCHEMES.victoria;
+
 class VennDiagramApp {
     constructor(vennDiagrams) {
         const that = this;
@@ -36,14 +70,8 @@ class VennDiagramApp {
         const name = this.vennDiagrams.diagrams_list[this.diagramIndex];
         const diagram = this.vennDiagrams[name];
         document.querySelector("#diagram-name").innerText = diagram.name;
-
-        const colorScheme = {
-            center: "#cfc0ef",
-            foreground: "#888888",
-            background: "#131313"
-        };
+        const colorScheme = COLOR_SCHEMES[name] || COLOR_SCHEMES.default;
         this.applyColorScheme(colorScheme);
-
         this.diagram = new VennDiagram(diagram, colorScheme);
     }
 
