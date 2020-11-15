@@ -49,6 +49,16 @@ class VennDiagramApp {
         this.diagram = null;
         this.diagramIndex = 0;
         this.loadDiagram();
+
+        window.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                that.loadPreviousDiagram();
+            } else if (event.key === "ArrowRight") {
+                event.preventDefault();
+                that.loadPreviousDiagram();
+            }
+        });
     }
 
     loadNextDiagram() {
@@ -173,6 +183,7 @@ class VennDiagram {
     }
 
     cleanup() {
+        this.draw.clear();
         const node = this.draw.node;
         node.parentElement.removeChild(node);
 
