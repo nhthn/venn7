@@ -155,7 +155,7 @@ class BezierPath:
         for bezier in self.beziers:
             parts.append("C")
             for i in range(1, 4):
-                parts.append(bezier.control_points[i, :])
+                parts.extend(bezier.control_points[i, :])
         return " ".join([str(x) for x in parts])
 
 
