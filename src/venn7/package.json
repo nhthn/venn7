@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "paper-jsdom": "^0.12.11"
+  }
+}

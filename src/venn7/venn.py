@@ -1,12 +1,20 @@
+import json
 import logging
 import math
+import os
+import pathlib
+import subprocess
+
 import numpy as np
+import shapely.geometry
+import shapely.affinity
+
 import venn7.bezier
 from venn7.bezier import MetafontBezier
 from venn7.bezier import MetafontSpline
 from venn7.bezier import BezierPath
-import shapely.geometry
-import shapely.affinity
+
+ROOT = pathlib.Path(os.path.realpath(__file__)).parent
 
 class VennDiagram:
     """A simple, polar symmetric monotone Venn diagram represented with a
@@ -159,8 +167,8 @@ class VennDiagram:
         spline = MetafontSpline(control_points, tensions)
 
         # Fudge factor to avoid perfectly coincident endpoints, which cause
-        # issues for CGAL.
-        spline = spline.translate(np.array([1e-3, 0]))
+        # issues for Boolean ops.
+        spline = spline.translate(np.array([1e-4, 0]))
 
         return spline
 
@@ -207,42 +215,23 @@ class VennDiagram:
 
             assert not region.is_empty
 
-    def get_regions(self):
-        curve_0 = self.get_spline()
-        curves = [curve_0]
-        for i in range(1, self.n):
-            theta = i * 2 * np.pi / self.n
-            matrix = venn7.bezier.get_rotation_matrix(theta)
-            curve = curve_0.transform(matrix)
-            curves.append(curve)
-
-        # Region at index 0 is an empty set.
-        regions = [[]]
-        for rank in range(1, 2 ** self.n):
-            curves_included = []
-            curves_excluded = []
-            tmp_rank = rank
-            for i in range(self.n):
-                if tmp_rank % 2 == 0:
-                    curves_excluded.append(curves[i])
-                else:
-                    curves_included.append(curves[i])
-                tmp_rank //= 2
-            logging.info(f"Computing region of rank {rank}.")
-            region = BezierPath.intersect_and_subtract(
-                curves_included,
-                curves_excluded,
-            )
-            regions.append(region)
-        return regions
-
-
     def export_json(self):
-        return {
+        result = {
             "n": self.n,
             "curve": self.get_spline().as_svg_path(),
-            "regions": [region.as_svg_path() for region in self.get_regions()],
         }
+
+        with open("curves.json", "w") as f:
+            json.dump(result, f)
+
+        process = subprocess.run(
+            ["node", str(ROOT / "venn_boolean.js"), "curves.json"],
+            capture_output=True,
+            check=True
+        )
+        result["regions"] = json.loads(process.stdout)
+
+        return result
 
     def plot(self):
         import matplotlib.pyplot as plt

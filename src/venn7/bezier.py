@@ -31,19 +31,6 @@ class CubicBezier:
     def translate(self, displacement):
         return CubicBezier(self.control_points + displacement[np.newaxis, :])
 
-    @classmethod
-    def from_beziertool_json(cls, bezier_json):
-        supporting_curve_json = bezier_json["supporting_curve"]
-        supporting_curve = cls([
-            (point["x"], point["y"])
-            for point in supporting_curve_json["control_points"]
-        ])
-        t_source = bezier_json["t_source"]
-        t_target = bezier_json["t_target"]
-        if np.allclose(t_source, t_target):
-            raise DegenerateBezierError
-        return supporting_curve.clip(t_source, t_target)
-
     @staticmethod
     def f(t, x0, x1, x2, x3):
         s = 1 - t
@@ -58,59 +45,6 @@ class CubicBezier:
         x = self.f(t, *self.control_points[:, 0])
         y = self.f(t, *self.control_points[:, 1])
         return np.squeeze(np.vstack([x, y]).T)
-
-    def clip(self, t_1, t_2):
-        """Return a new CubicBezier that is the result of truncating this one's
-        parameter to the interval [t_1, t_2]."""
-        c = [sympy.Symbol(f"c{i}") for i in range(4)]
-        t = sympy.Symbol("t")
-
-        # We have the equation
-        # f(t, c0', c1', c2', c3') = f(t_1 + t * (t_2 - t_1), c0, c1, c2, c3).
-        # c0-3 are known but and c0-3' are unknown. Two polynomials are equal
-        # if their coefficients are equal. Identify the linear combinations of
-        # c and c' variables in the coefficients of t-terms, and produce the
-        # matrix equation L c' = R c which can be solved with a linear systems
-        # solver. Two 4x4 systems must be solved, one for x-coordinates and
-        # one for y-coordinates.
-
-        # In SymPy, polynomials cannot have variables in coefficients, so the
-        # polynomial in t is treated as a multivariate polynomial. When using
-        # coeff_monomial to exact coefficients, we have to treat c-variables
-        # as dependent variables on the polynomial.
-
-        rhs_poly = sympy.poly(self.f(t_1 + t * (t_2 - t_1), *c))
-        rhs_matrix = np.zeros((4, 4))
-        for i in range(4):
-            for j in range(4):
-                rhs_matrix[i, j] = rhs_poly.coeff_monomial(t ** i * c[j])
-
-        # Note: lhs_matrix is constant, and equal to:
-        #      1  0  0  0
-        #     -3  3  0  0
-        #      3 -6  3  0
-        #     -1  3 -3  1
-        # but it's more fun to derive from first principles.
-
-        lhs_poly = sympy.poly(self.f(t, *c))
-        lhs_matrix = np.zeros((4, 4))
-        for i in range(4):
-            for j in range(4):
-                lhs_matrix[i, j] = lhs_poly.coeff_monomial(t ** i * c[j])
-
-        x = np.linalg.solve(lhs_matrix, rhs_matrix @ self.control_points[:, 0])
-        y = np.linalg.solve(lhs_matrix, rhs_matrix @ self.control_points[:, 1])
-
-        return CubicBezier(np.vstack([x, y]).T)
-
-    def as_json(self):
-        points_json = []
-        for i in range(3):
-            points_json.append({
-                "x": self.control_points[i, 0],
-                "y": self.control_points[i, 1]
-            })
-        return points_json
 
 
 class MetafontBezier(CubicBezier):
@@ -198,16 +132,6 @@ class BezierPath:
             new_beziers.append(new_bezier)
         return BezierPath(new_beziers)
 
-    @classmethod
-    def from_beziertool_json(cls, path_json):
-        beziers = []
-        for x in path_json["outer_boundary"]:
-            try:
-                beziers.append(CubicBezier.from_beziertool_json(x))
-            except DegenerateBezierError:
-                pass
-        return cls(beziers)
-
     def plot(self):
         import matplotlib.pyplot as plt
         for bezier in self.beziers:
@@ -233,25 +157,6 @@ class BezierPath:
             for i in range(1, 4):
                 parts.append(bezier.control_points[i, :])
         return " ".join([str(x) for x in parts])
-
-    def intersect(self, other):
-        return BezierPath.intersect_and_subtract([self, other], [])
-
-    @staticmethod
-    def intersect_and_subtract(intersection_curves, subtraction_curves):
-        json_ = {
-            "intersection_curves": [x.as_json() for x in intersection_curves],
-            "subtraction_curves": [x.as_json() for x in subtraction_curves],
-        }
-        with open("curves.json", "w") as f:
-            json.dump(json_, f)
-        process = subprocess.run(
-            ["beziertool/beziertool", "curves.json"],
-            check=True,
-            stdout=subprocess.PIPE,
-        )
-        result = json.loads(process.stdout)
-        return BezierPath.from_beziertool_json(result["polygons"][0])
 
 
 class MetafontSpline(BezierPath):

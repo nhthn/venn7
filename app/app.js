@@ -7,17 +7,24 @@ canvas.setAttribute("height", canvas_size);
 document.getElementById("canvas-container").appendChild(canvas);
 paper.setup(canvas);
 
+const scale = 5;
+
 function make_venn_curve(i) {
     const path = new paper.Path(venn_diagram.curve);
     path.scale(scale, new paper.Point(0, 0));
-    path.translate(new paper.Point(1, 0));
     path.rotate(360 / 7 * i, new paper.Point(0, 0));
     path.translate(new paper.Point(canvas_size / 2, canvas_size / 2));
     return path;
 }
+function make_region(i) {
+    const path = new paper.Path(venn_diagram.regions[i]);
+    path.scale(scale, new paper.Point(0, 0));
+    path.translate(new paper.Point(canvas_size / 2, canvas_size / 2));
+    return path;
+}
+
 
 const curves = [];
-const scale = 5;
 
 let i;
 for (i = 0; i < venn_diagram.n; i++) {
@@ -46,42 +53,29 @@ for (i = 0; i < venn_diagram.n; i++) {
     synths.push(synth);
 }
 
+const regions = [];
+
 for (i = 1; i < Math.pow(2, venn_diagram.n); i++) {
     const sets = get_venn_sets(i, venn_diagram.n);
 
-    let polygon = null;
-    let j;
-    for (j = 0; j < venn_diagram.n; j++) {
-        if (sets[j]) {
-            let curve = make_venn_curve(j);
-            if (polygon === null) {
-                polygon = curve;
-            } else {
-                polygon = polygon.intersect(curve);
-            }
-        }
-    }
-    for (j = 0; j < venn_diagram.n; j++) {
-        if (!sets[j]) {
-            let curve = make_venn_curve(j);
-            polygon = polygon.subtract(curve);
-        }
-    }
-    polygon.fillColor = new paper.Color(0, 0, 0, 0.01);
-    polygon.strokeColor = null;
-    polygon.strokeWidth = 3;
+    let region = make_region(i);
+    regions.push(region);
 
-    polygon.on("mouseenter", () => {
-        polygon.strokeColor = new paper.Color(0, 0, 0);
+    region.fillColor = new paper.Color(0, 0, 0, 1e-3);
+    region.strokeColor = null;
+    region.strokeWidth = 3;
+
+    region.on("mouseenter", () => {
+        region.strokeColor = new paper.Color(0, 0, 0);
         let i;
         for (i = 0; i < venn_diagram.n; i++) {
             curves[i].strokeColor = sets[i] ? new paper.Color(0, 51 / 255, 102 / 255) : null;
         }
     });
-    polygon.on("mouseleave", () => {
-        polygon.strokeColor = null;
+    region.on("mouseleave", () => {
+        region.strokeColor = null;
     });
-    polygon.on("mousedown", () => {
+    region.on("mousedown", () => {
         let i;
         for (i = 0; i < venn_diagram.n; i++) {
             if (sets[i]) {
@@ -89,5 +83,4 @@ for (i = 1; i < Math.pow(2, venn_diagram.n); i++) {
             }
         }
     });
-
 }
