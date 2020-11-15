@@ -245,6 +245,15 @@ class VennDiagram:
         plt.ylim(-100, 100)
         plt.show()
 
+DIAGRAMS_LIST = [
+    "victoria",
+    "adelaide",
+    "massey",
+    "manawatu",
+    "palmerston_north",
+    "hamilton",
+]
+
 DIAGRAMS = {
     "victoria": VennDiagram(7, "100000 110010 110111 101111 001101 000100"),
     "adelaide": VennDiagram(7, "10000 11010 11111 11111 01101 00100"),
@@ -257,6 +266,7 @@ DIAGRAMS = {
 if __name__ == "__main__":
     import json
     diagrams_json = {}
+    diagrams_json["diagrams_list"] = DIAGRAMS_LIST
     for name, diagram in DIAGRAMS.items():
         diagrams_json[name] = diagram.export_json()
 
