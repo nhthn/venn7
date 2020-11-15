@@ -30,11 +30,13 @@ class VennDiagramApp {
     }
 
     loadDiagram() {
-        const name = this.vennDiagrams.diagrams_list[this.diagramIndex];
         if (this.diagram !== null) {
             this.diagram.cleanup();
         }
-        this.diagram = new VennDiagram(this.vennDiagrams[name]);
+        const name = this.vennDiagrams.diagrams_list[this.diagramIndex];
+        const diagram = this.vennDiagrams[name];
+        document.querySelector("#diagram-name").innerText = diagram.name;
+        this.diagram = new VennDiagram(diagram);
     }
 }
 

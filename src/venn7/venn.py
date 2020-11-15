@@ -36,7 +36,8 @@ class VennDiagram:
     column.
     """
 
-    def __init__(self, n, weave_code):
+    def __init__(self, n, weave_code, name=None):
+        self.name = name
         self.n = n
 
         self.condensed_code = self.parse_weave_code(weave_code)
@@ -217,6 +218,7 @@ class VennDiagram:
 
     def export_json(self):
         result = {
+            "name": self.name,
             "n": self.n,
             "curve": self.get_spline().as_svg_path(),
         }
@@ -255,12 +257,12 @@ DIAGRAMS_LIST = [
 ]
 
 DIAGRAMS = {
-    "victoria": VennDiagram(7, "100000 110010 110111 101111 001101 000100"),
-    "adelaide": VennDiagram(7, "10000 11010 11111 11111 01101 00100"),
-    "massey": VennDiagram(7, "100000 110001 110111 111110 111000 010000"),
-    "manawatu": VennDiagram(7, "1000000 1000101 1101101 0111011 0011010 0010000"),
-    "palmerston_north": VennDiagram(7, "1000000 1100010 1110110 1011101 0001101 0000100"),
-    "hamilton": VennDiagram(7, "10000 10101 11111 11111 11010 10000")
+    "victoria": VennDiagram(7, "100000 110010 110111 101111 001101 000100", "Victoria"),
+    "adelaide": VennDiagram(7, "10000 11010 11111 11111 01101 00100", "Adelaide"),
+    "massey": VennDiagram(7, "100000 110001 110111 111110 111000 010000", "Massey"),
+    "manawatu": VennDiagram(7, "1000000 1000101 1101101 0111011 0011010 0010000", "Manawatu"),
+    "palmerston_north": VennDiagram(7, "1000000 1100010 1110110 1011101 0001101 0000100", "Palmerston North"),
+    "hamilton": VennDiagram(7, "10000 10101 11111 11111 11010 10000", "Hamilton"),
 }
 
 if __name__ == "__main__":

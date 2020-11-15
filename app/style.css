@@ -34,3 +34,14 @@ body {
 #next-diagram {
     right: 0;
 }
+
+#diagram-name {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    font-size: 20pt;
+    font-weight: normal;
+    height: 2em;
+    text-align: center;
+}
