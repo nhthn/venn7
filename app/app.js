@@ -1,11 +1,21 @@
 const venn_diagram = venn_diagrams[location.hash.substring(1) || "adelaide"];
 
 const canvas_size = 800;
-
 const canvas_container = document.getElementById("canvas-container");
 
 const draw = SVG().addTo(canvas_container).size(canvas_size, canvas_size);
 const scale = 5;
+
+function update_size() {
+    const size = Math.min(window.innerHeight, window.innerWidth);
+    draw.node.setAttribute("width", size);
+    draw.node.setAttribute("height", size);
+    draw.node.setAttribute("viewBox", `0 0 ${canvas_size} ${canvas_size}`);
+}
+update_size();
+window.addEventListener("resize", function () {
+    update_size();
+});
 
 function make_venn_curve(i) {
     const path = draw.path(venn_diagram.curve)
