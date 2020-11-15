@@ -221,13 +221,12 @@ class VennDiagram:
             "curve": self.get_spline().as_svg_path(),
         }
 
-        with open("curves.json", "w") as f:
-            json.dump(result, f)
-
         process = subprocess.run(
-            ["node", str(ROOT / "venn_boolean.js"), "curves.json"],
+            ["node", str(ROOT / "venn_boolean.js")],
+            check=True,
             capture_output=True,
-            check=True
+            input=json.dumps(result),
+            encoding="utf-8",
         )
         result["regions"] = json.loads(process.stdout)
 

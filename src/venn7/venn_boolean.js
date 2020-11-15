@@ -11,7 +11,7 @@ const dom = new JSDOM(`
 `);
 paper.setup(dom.window.document.body);
 
-const venn_diagram = JSON.parse(fs.readFileSync(process.argv[2], "utf-8"));
+const venn_diagram = JSON.parse(fs.readFileSync(0, "utf-8"));
 
 function make_venn_curve(i) {
     const path = new paper.Path(venn_diagram.curve);
