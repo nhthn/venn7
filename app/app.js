@@ -95,7 +95,7 @@ class VennDiagram {
 
         this.synths = [];
         for (i = 0; i < venn_diagram.n; i++) {
-            const synth = new Tone.Synth().toDestination();
+            const synth = new Tone.Player(`sounds/note_${[0, 2, 3, 5, 7, 8, 10][i]}.mp3`).toDestination();
             synth.volume.value = -10;
             this.synths.push(synth);
         }
@@ -120,7 +120,7 @@ class VennDiagram {
                     let i;
                     for (i = 0; i < venn_diagram.n; i++) {
                         if (sets[i]) {
-                            this.synths[i].triggerAttackRelease(["C", "D", "Eb", "F", "G", "Ab", "Bb"][i] + "4", "8n");
+                            this.synths[i].start();
                         }
                     }
                 });
