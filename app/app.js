@@ -36,12 +36,29 @@ class VennDiagramApp {
         const name = this.vennDiagrams.diagrams_list[this.diagramIndex];
         const diagram = this.vennDiagrams[name];
         document.querySelector("#diagram-name").innerText = diagram.name;
-        this.diagram = new VennDiagram(diagram);
+
+        const colorScheme = {
+            center: "#cfc0ef",
+            foreground: "#888888",
+            background: "#131313"
+        };
+        this.applyColorScheme(colorScheme);
+
+        this.diagram = new VennDiagram(diagram, colorScheme);
+    }
+
+    applyColorScheme(colorScheme) {
+        document.querySelector("#canvas-container")
+            .style.backgroundColor = colorScheme.background;
+        for (let selector of ["#diagram-name", "#previous-diagram", "#next-diagram"]) {
+            document.querySelector(selector)
+                .style.color = colorScheme.foreground;
+        }
     }
 }
 
 class VennDiagram {
-    constructor(venn_diagram) {
+    constructor(venn_diagram, colorScheme) {
         const canvas_size = 800;
         const draw = SVG().addTo("#canvas-container").size(canvas_size, canvas_size);
         this.draw = draw;
@@ -60,8 +77,8 @@ class VennDiagram {
 
         function make_venn_curve(i) {
             const path = draw.path(venn_diagram.curve)
-                .fill({ color: "#036", opacity: 1 / 7 })
-                .stroke({ opacity: 0, color: "#036", width: 1.5 / scale })
+                .fill({ color: colorScheme.center, opacity: 1 / 7 })
+                .stroke({ opacity: 0, color: colorScheme.center, width: 1.5 / scale })
                 .rotate(360 / 7 * i, 0, 0)
                 .scale(scale, 0, 0)
                 .translate(canvas_size / 2, canvas_size / 2);
@@ -70,7 +87,7 @@ class VennDiagram {
         function make_region(i) {
             const path = draw.path(venn_diagram.regions[i])
                 .fill({ opacity: 0 })
-                .stroke({ opacity: 0, color: "#000", width: 3 / scale })
+                .stroke({ opacity: 0, color: colorScheme.foreground, width: 3 / scale })
                 .scale(scale, 0, 0)
                 .translate(canvas_size / 2, canvas_size / 2)
             return path;
