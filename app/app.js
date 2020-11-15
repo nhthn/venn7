@@ -40,8 +40,6 @@ class VennDiagramApp {
     }
 }
 
-// CLEAN UP TONE.js!
-
 class VennDiagram {
     constructor(venn_diagram) {
         const canvas_size = 800;
@@ -95,11 +93,11 @@ class VennDiagram {
             return result;
         };
 
-        const synths = [];
+        this.synths = [];
         for (i = 0; i < venn_diagram.n; i++) {
             const synth = new Tone.Synth().toDestination();
             synth.volume.value = -10;
-            synths.push(synth);
+            this.synths.push(synth);
         }
 
         const regions = [];
@@ -122,7 +120,7 @@ class VennDiagram {
                     let i;
                     for (i = 0; i < venn_diagram.n; i++) {
                         if (sets[i]) {
-                            synths[i].triggerAttackRelease(["C", "D", "Eb", "F", "G", "Ab", "Bb"][i] + "4", "8n");
+                            this.synths[i].triggerAttackRelease(["C", "D", "Eb", "F", "G", "Ab", "Bb"][i] + "4", "8n");
                         }
                     }
                 });
@@ -132,6 +130,11 @@ class VennDiagram {
     cleanup() {
         const node = this.draw.node;
         node.parentElement.removeChild(node);
+
+        for (let synth of this.synths) {
+            synth.dispose();
+        }
+
         window.removeEventListener("resize", this.resizeListener);
     }
 }
