@@ -2,32 +2,38 @@ const COLOR_SCHEMES = {
     victoria: {
         center: "#034488",
         foreground: "#111111",
-        background: "#e0f0ff"
+        background: "#e0f0ff",
+        sound: "bell"
     },
     adelaide: {
         center: "#ffffff",
         foreground: "#ffffff",
-        background: "#440013"
+        background: "#440013",
+        sound: "pad"
     },
     massey: {
         center: "#fff0ef",
         foreground: "#888888",
-        background: "#131313"
+        background: "#131313",
+        sound: "pad"
     },
     manawatu: {
         center: "#000000",
         foreground: "#000000",
-        background: "#ffefff"
+        background: "#ffefff",
+        sound: "pad"
     },
     palmerston_north: {
         center: "#003300",
         foreground: "#000000",
-        background: "#aaffaa"
+        background: "#aaffaa",
+        sound: "pad"
     },
     hamilton: {
         center: "#330033",
         foreground: "#000000",
-        background: "#ffeef8"
+        background: "#ffeef8",
+        sound: "pad"
     },
 };
 COLOR_SCHEMES.default = COLOR_SCHEMES.victoria;
@@ -150,7 +156,7 @@ class VennDiagram {
 
         this.synths = [];
         for (i = 0; i < venn_diagram.n; i++) {
-            const synth = new Tone.Player(`sounds/note_${[0, 2, 3, 5, 7, 8, 10][i]}.mp3`).toDestination();
+            const synth = new Tone.Player(`sounds/${colorScheme.sound}/note_${[0, 2, 3, 5, 7, 8, 10][i]}.mp3`).toDestination();
             synth.volume.value = -10;
             this.synths.push(synth);
         }
