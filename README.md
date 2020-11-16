@@ -6,10 +6,21 @@ This project consists of:
 - a tool for generating attractively rendered symmetric 7-Venn diagrams
 - a web app where said symmetric 7-Venn diagrams are identified with 7-note scales and used as an interface for playing chords.
 
+Running the app
+---------------
+
+This repository contains sound files checked in using git-lfs. To obtain them, you will need to [install git-lfs](git-lfs), and run `git lfs pull` after cloning this repo.
+
+[git-lfs]: https://git-lfs.github.com/
+
+Tone.js uses AJAX to retrieve the samples used for playback, so you will need to run a local web server. To do this, `cd` into the `app` folder and run `python3 -m http.server`, then point your browser to `http://localhost:8000/`.
+
 Venn diagrams
 -------------
 
-The problem of constructing rotationally symmetric Venn diagrams with more than three sets is an active area of research in the field of combinatorics. A theorem of Henderson states that n-fold rotational symmetric Venn diagrams can only exist when n is prime.
+You're certainly familiar with the well-known Venn diagrams with two and three sets. With four or more sets, the space of Venn diagrams is rich and full of surprising properties. For example, a valid 4-Venn diagram can't be constructed using circles (we have to resort to ellipses), and neither can a 4-Venn diagram possess four-fold rotational symmetry.
+
+A theorem of Henderson states that a n-Venn diagram with n-fold rotational symmetry can only exist when n is prime. The search for symmetric n-Venn diagrams for n > 3 is an active research topic in the field of combinatorics.
 
 There is only one symmetric 5-Venn diagram, which can be rendered with five ellipses. Symmetric 7-Venn diagrams were a mystery for some years, but eventually one was found by Grunbaum. As more were discovered, some constraints on the search were defined:
 
@@ -17,29 +28,32 @@ There is only one symmetric 5-Venn diagram, which can be rendered with five elli
 - **Monotonicity:** the Venn diagram can theoretically be rendered with convex curves (even if it isn't in practice). This implies that the different regions are sorted into concentric layers by the number of curves that they are part of.
 - **Polar symmetry:** the Venn diagram is topologically unchanged when turned inside out.
 
-There are exactly six "golden 7-Venn diagrams" satisfying all three, all named after their places of discovery: Adelaide, Hamilton, Manawatu, Massey, Palmerston North, and Victoria. If we relax the polar symmetry condition, there are an additional 16 "silver 7-Venn diagrams," for a total of 23 simple monotone symmetric 7-Venn diagrams.
+There are exactly six "golden 7-Venn diagrams" satisfying all three: Adelaide, Hamilton, Manawatu, Massey, Palmerston North, and Victoria. If we relax the polar symmetry condition, there are an additional 16 "silver 7-Venn diagrams," for a total of 23 simple monotone symmetric 7-Venn diagrams.
 
-The 11-Venn case is even richer than the 7-Venn case. A few non-simple diagrams were found in the 2000's, but Mamakani and Ruskey made a breakthrough in 2012, discovering over 200,000 simple symmetric monotone 11-Venn diagrams as well as 13-Venn cases. Such diagrams are unmistakably beautiful, but not as easily made into a user interface.
+The 11-Venn case is even richer than the 7-Venn case. A few non-simple diagrams were found in the 2000's, but Mamakani and Ruskey made a breakthrough in 2012, discovering over 200,000 simple symmetric monotone 11-Venn diagrams as well as 13-Venn cases. As beautiful as these diagrams are, I don't see an obvious way to make them into a user interface, as there are thousands of extremely small regions.
 
 Pandiatonicism
 --------------
 
-My friend Nathan Turczan originally inspired this project by pointing out that the curves of a 7-fold Venn diagram can be associated with the seven tones of a diatonic scale. The regions of the Venn diagram each represent sets in pitch class set theory mod 7 (Santa, 2000). Set theory mod 7 is closely related to pandiatonicism. It could therefore be used as an interface for selecting and visualizing diatonic pitch class sets. Although its practicality is certainly up for debate, we thought it would make an interesting and beautiful art piece.
+Pandiatonicism is a broad variety of musical practices that use the diatonic scale in ways "beyond" tonal harmony. A common pandiatonic technique is to treat the seven tones as roughly uniform,just as dodecaphony views the 12-tone chromatic scale. This idea is realized in pitch class set theory mod 7 (Santa, 2000), which adapts classical 12-tone set theory to pandiatonic music by thinking of diatonic chords as subsets of the scale.
 
-The sounds used are Shepard tones, so that the octavation of the chord is ambiguous (not implemented yet). If non-Shepard tones were used, two tones that are adjacent in the scale would have to be separated by a leap of a seventh, tarnishing some of the symmetry.
+My friend Nathan Turczan originally inspired this project by pointing out that the curves of a 7-fold Venn diagram can be mapped to a diatonic scale, making the Venn diagram into a playable visualization of set theory mod 7. I loved the idea, and it stuck with me for a good two years until I finally caved and built it. Just as we anticipated, the resulting interface is as awkward and strange as it is fascinating.
+
+I noticed early on that, when playing standard synthesizer tones on the diagram, there is a discontinuity as the scale wraps back to the octave. For example, there are seven regions on a diagram representing diatonic seconds, but one of those has to be a seventh, breaking the symmetry. To address this, I decided to use Shepard tones, an auditory illusion where a note has ambiguous octavation. This closes the seam formed by the octave and makes the tones reflect the symmetry of the diagram.
 
 Implementation details
 ----------------------
 
-The Bezier curve data is generated offline using Python + NumPy, and a bit of SymPy and Shapely. A small C++ application using CGAL computes the Boolean operations on Bezier curves. The resulting data is wrapped up into a single JSON file and loaded into the web app. The sound design is rendered from synthesizer patches made in SuperCollider.
+The Bezier curve data is generated offline using Python + NumPy, and a bit of SymPy and Shapely. Paper.js's functions are used to compute Boolean operations on Bezier curves. The resulting data is wrapped up into a single JSON file and loaded into the web app. The sound design is rendered from synthesizer patches made in SuperCollider.
 
-All Venn diagrams are created parametrically/algorithmically with no use of a GUI, so their parameters can be adjusted. In the following sections, I'll cover technical details and challenges of each component: 
+All Venn diagrams are created parametrically and algorithmically with no use of a GUI, so their parameters can be adjusted. In the following sections, I'll cover technical details and challenges of each component: 
 
 - Entry of Venn diagrams with a matrix encoding.
 - Combinatorial validation of diagram.
-- Conversion to cubic Bezier curves. (Partially implemented.)
+- Conversion to cubic Bezier curves using METAFONT splines.
 - Geometric validation of diagram.
-- Boolean operations on Bezier curves using CGAL. (Not yet implemented.)
+- Boolean operations on Bezier curves using Paper.js.
+- Sound design of Shepard tones.
 - JSON export for use in JavaScript web app.
 
 ### Entry of Venn diagrams
@@ -96,7 +110,7 @@ A few quick validation steps need to get out of the way first: no two horizontal
 
 A key observation in the Cao et al. algorithm is that, reading left to right, every crossing starts a region, and every region is started by exactly one crossing. In other words, a crossing is a junction of four regions, and the crossing's associated region is immediately to its right. The relationship between crossings and regions is almost one-to-one -- only the outermost (empty set) and innermost ({0, 1, 2, 3, 4, 5, 6}) regions have no associated crossing.
 
-Given a crossing, the p-matrix can be used to identify the sets in the associated region. After swapping two entries while computing the p-matrix, take the upper of the two entries that have just been swapped, and take the strip of entries from that entry to the top of the matrix. This strip names the precise set of curves that the region belongs to. For example, if we just swapped the 2nd/3rd entries and 4th/5th entries to get p-matrix column [0, 2, 1, 4, 3, 5, 6], the upper crossing starts region {0, 2} and the lower one {0, 2, 1, 4}. If the matrix encoding produces a valid Venn diagram, then all 128 subsets will be represented exactly once by a crossing, except the empty set and {0, 1, 2, 3, 4, 5, 6}.
+Given a crossing, the p-matrix can be used to identify the sets in the associated region. After swapping entries `k` and `k + 1` (0-indexed) in column `c` of the p-matrix, the strip `c[:k + 1]` in Python slice notation names the precise set of curves that the region belongs to. For example, if we just swapped the 2nd/3rd entries and 4th/5th entries to get p-matrix column [0, 2, 1, 4, 3, 5, 6], the upper crossing starts region {0, 2} and the lower one {0, 2, 1, 4}. If the matrix encoding produces a valid Venn diagram, then 126 subsets will each be represented exactly once by a crossing. The remaining two are the innermost and outermost regions, bringing the total to 2^7 = 128.
 
 ### Determination of cubic Bezier curves
 
@@ -108,11 +122,24 @@ Here we have some artistic license to arbitrarily add new points and change cons
 
 ### Boolean operations on Bezier curves
 
-We need to produce path data for the 127 regions of the Venn diagram by performing Boolean operations on the Bezier curves. I couldn't find any well-supported Python library that does this. I experimented with CGAL, but ran into mysterious "precondition errors" that I couldn't resolve. Paper.js's built-in Boolean operations seemed to work OK. I invoke Paper.js using Node as a subprocess.
+We need to produce path data for the 127 regions of the Venn diagram by performing Boolean operations on the Bezier curves. I couldn't find any well-supported Python library that does this. I experimented with CGAL, but ran into mysterious "precondition errors" that I couldn't resolve.
+
+Paper.js's built-in Boolean operations seemed to work OK, although sometimes they produce artifacts. I invoke Paper.js using Node as a subprocess. In this case, I'm purely running Paper.js offline, not using it in the Web app.
+
+### Sound design of Shepard tones
+
+I used SuperCollider, an audio synthesis language, to make some Shepard tone patches for the app. Each Venn diagram is associated with a different patch and color scheme, only for the reason of making the app less bland. These choices are artistic and not reflective of any mathematical properties of the diagrams.
+
+Each patch is a single-octave SynthDef which is instantiated in nine different octaves on the language side. Each octave is multiplied by a gain factor `exp(-((p - c) / (12 * s))^2)`, where `p` is the synth's pitch, `c` is a fixed "center" pitch, and `s` is a spread factor that controls the width of the bell curve. `s` has to be tuned to ensure the Shepard tone illusion works and creates a seamless scale.
+
+Due to the octaves, Shepard tones seem to require a really huge, orchestral-sounding patches.
+
+Some comments on individual patches:
+
+- Pads: standard detuned subtractive synths with super long reverb.
+- Bells: modal/additive synthesis using a stiff string physical model. See my blog post on modal synthesis for info in this.
 
 ### Web app
-
-I went with SVG.js rather than canvas (e.g. p5.js or Paper.js) due to an educated guess on performance implications that I have yet to verify. SVG natively supports mouse events on Bezier paths. In canvas, libraries have to provide their own functionality to determine whether the mouse is inside or outside a path. Plus, I can easily export the figures as SVG.
 
 The app is plain old vanilla JavaScript runnable in a local filesystem, and the sole dependencies are SVG.js and Tone.js (both of which I have vendored).
 
@@ -131,6 +158,11 @@ Since the data generation is decoupled from the app, I would love to see what ot
 - Twister mat
 - 7-day weekly planner
 - eccentric billionaire mansion floor plan
+
+Acknowledgements
+----------------
+
+Thanks to Nathan Turczan for first coming up with this idea, and Luke Nihlen for early feedback. Dedicated in memory of Eddie Gale.
 
 References
 ----------
