@@ -1,9 +1,16 @@
+/*
+
+Sorry about the code duplication and general disorderliness of this file.
+
+*/
+
 (
 SynthDef(\padSynth, {
 	var snd, freq, n;
 	freq = \freq.kr(440);
 	n = 8;
-	snd = { Pulse.ar(freq * (LFNoise2.kr(6) * 0.2).midiratio, LFNoise2.kr(3).range(0.3, 0.7)) } ! n;
+	snd = { Saw.ar(freq * (LFNoise2.kr(2) * 0.15).midiratio) * 6.dbamp } ! n;
+	snd = RLPF.ar(snd, freq * 3 * (LFNoise2.kr(3 ! n) * 12).midiratio, 0.5);
 	snd = Splay.ar(snd);
 	snd = LPF.ar(snd, (freq * 5).min(16e3));
 	snd = snd * Env.asr(3, 1, 3).ar(Done.freeSelf, \gate.kr(1));
@@ -15,10 +22,59 @@ SynthDef(\padFx, {
 	var snd;
 	snd = In.ar(\out.kr(0), 2);
 	snd = BPeakEQ.ar(snd, 4000, 1, -3);
-	snd = snd + NHHall.ar(snd, 3);
+	snd = snd + (NHHall.ar(snd, 3) * -10.dbamp);
 	snd = Limiter.ar(snd);
+	SendReply.ar(Trig1.ar(DetectSilence.ar(snd.abs.sum), SampleDur.ir), '/done');
 	ReplaceOut.ar(\out.kr(0), snd);
 }).add;
+)
+
+
+(
+~play = { |note|
+	var s = Server.default;
+	var synths;
+	s.makeBundle(s.latency, {
+		synths = (-4..4).collect { |octave|
+			var midiNote, freq, envelope;
+			midiNote = 60 + (12 * octave) + note;
+			freq = midiNote.midicps;
+			envelope = ((midiNote - 54) / 12 / 2).squared.neg.exp;
+			Synth(\padSynth, [
+				freq: freq,
+				amp: -20.dbamp * envelope,
+			]);
+		};
+	});
+	5.wait;
+	s.makeBundle(s.latency, {
+		synths.do { |synth| synth.set(\gate, 0) };
+	});
+};
+
+~recordPath = "../app/sounds/pad/".resolveRelative;
+"mkdir -p %".format(~recordPath).unixCmd;
+
+Routine {
+	var s = Server.default;
+	Synth.tail(nil, \padFx);
+	[0, 2, 3, 5, 7, 8, 10].do { |note|
+		s.sync;
+		s.recHeaderFormat = "WAV";
+		s.prepareForRecord(~recordPath +/+ "note_%.wav".format(note));
+		s.sync;
+		s.record;
+		~play.(note);
+		// Hack because we may receive premature triggers before start of note.
+		3.0.wait;
+		OSCFunc({
+			s.stopRecording;
+		}, \done).oneShot;
+		while { s.isRecording } {
+			1.0.wait;
+		};
+	};
+} .play;
 )
 
 (
@@ -34,7 +90,7 @@ Routine {
 					var midiNote, freq, envelope;
 					midiNote = 60 + (12 * octave) + note;
 					freq = midiNote.midicps;
-					envelope = ((midiNote - 60) / 12 / 2).squared.neg.exp;
+					envelope = ((midiNote - 54) / 12 / 2).squared.neg.exp;
 					Synth(\padSynth, [
 						freq: freq,
 						amp: -20.dbamp * envelope,
@@ -148,23 +204,38 @@ Routine {
 
 
 
+
 (
-SynthDef(\grainSynth, {
-	var snd, freq, ratio;
+SynthDef(\alienSynth, {
+	var snd, freq, n;
 	freq = \freq.kr(440);
-	ratio = LFNoise2.kr(4).range(1, 8).round;
-	snd = (LFPulse.ar(freq) - 0.5) * (LFPulse.ar(freq * ratio) - 0.5) * ToggleFF.ar(Dust.ar(4 ! 3));
-	snd = Splay.ar(snd);
-	snd = snd * Env.asr(0.0, 1, 0.0).ar(Done.freeSelf, \gate.kr(1));
+	n = 2;
+	snd = Saw.ar(freq * (LFNoise2.kr(3 ! n) * 0.1).midiratio);
+	snd = MoogFF.ar(snd, (freq * TRand.kr(1, 8, Dust.kr(8 ! n))).min(16e3), 3.5);
+	snd = snd * 20.dbamp;
+	snd = Splay.ar(snd, 0.3);
+	snd = snd * Env.asr(0.01, 1, 0.01).ar(Done.freeSelf, \gate.kr(1));
 	snd = snd * \amp.kr(0.4);
 	Out.ar(\out.kr(0), snd);
 }).add;
 
-SynthDef(\grainFx, {
-	var snd;
+SynthDef(\alienFx, {
+	var snd, wet;
 	snd = In.ar(\out.kr(0), 2);
-	//snd = snd + NHHall.ar(snd, 3);
+	snd = LeakDC.ar(snd);
+	snd = BPeakEQ.ar(snd, 4000, 1, -3);
+	wet = snd + LocalIn.ar(2);
+	wet = DelayC.ar(wet, 2, 1 + (SinOsc.ar(0.5, [0, pi]) * 1e-4));
+	wet = wet * -10.dbamp;
+	wet = wet + PitchShift.ar(wet, 0.2, 2);
+	wet = wet + PitchShift.ar(wet, 0.2, 0.5);
+	wet = LPF.ar(wet, 4000);
+	wet = HPF.ar(wet, 100);
+	LocalOut.ar(wet);
+	snd = snd + wet;
+	snd = LeakDC.ar(snd);
 	snd = Limiter.ar(snd);
+	SendReply.ar(Trig1.ar(DetectSilence.ar(snd.abs.sum, -60.dbamp), SampleDur.ir), '/done');
 	ReplaceOut.ar(\out.kr(0), snd);
 }).add;
 )
@@ -172,7 +243,7 @@ SynthDef(\grainFx, {
 (
 Routine {
 	var s = Server.default;
-	Synth.tail(nil, \grainFx);
+	Synth.tail(nil, \alienFx);
 	Server.default.sync;
 	loop {
 		[0, 2, 3, 5, 7, 8, 10].do { |note|
@@ -182,17 +253,64 @@ Routine {
 					var midiNote, freq, envelope;
 					midiNote = 60 + (12 * octave) + note;
 					freq = midiNote.midicps;
-					envelope = ((midiNote - 44) / 12 / 3).squared.neg.exp;
-					Synth(\grainSynth, [
+					envelope = ((midiNote - 54) / 12 / 2).squared.neg.exp;
+					Synth(\alienSynth, [
 						freq: freq,
 						amp: -20.dbamp * envelope,
 					]);
 				};
 			});
-			2.wait;
+			5.wait;
 			s.makeBundle(s.latency, {
 				synths.do { |synth| synth.set(\gate, 0) };
 			});
+		};
+	};
+} .play;
+)
+
+(
+~play = { |note|
+	var s = Server.default;
+	var synths;
+	s.makeBundle(s.latency, {
+		synths = (-4..4).collect { |octave|
+			var midiNote, freq, envelope;
+			midiNote = 60 + (12 * octave) + note;
+			freq = midiNote.midicps;
+			envelope = ((midiNote - 54) / 12 / 2).squared.neg.exp;
+			Synth(\alienSynth, [
+				freq: freq,
+				amp: -20.dbamp * envelope,
+			]);
+		};
+	});
+	5.wait;
+	s.makeBundle(s.latency, {
+		synths.do { |synth| synth.set(\gate, 0) };
+	});
+};
+
+~recordPath = "../app/sounds/alien/".resolveRelative;
+"mkdir -p %".format(~recordPath).unixCmd;
+
+Routine {
+	var s = Server.default;
+	Synth.tail(nil, \alienFx);
+	[0, 2, 3, 5, 7, 8, 10].do { |note|
+		s.sync;
+		s.recHeaderFormat = "WAV";
+		s.prepareForRecord(~recordPath +/+ "note_%.wav".format(note));
+		s.sync;
+		s.record;
+		~play.(note);
+		// Hack because we may receive premature triggers before start of note.
+		3.0.wait;
+		OSCFunc({
+			s.stopRecording;
+		}, \done).oneShot;
+		while { s.isRecording } {
+			1.0.wait;
 		};
 	};
 } .play;
