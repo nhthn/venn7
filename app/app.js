@@ -1,40 +1,73 @@
+function interpolateColors(color1, color2, steps) {
+    const result = [];
+
+    let hueDifference = color2[0] - color1[0];
+    if (hueDifference > 180) {
+        hueDifference = hueDifference - 360;
+    } else if (hueDifference < -180) {
+        hueDifference = hueDifference + 360;
+    }
+
+    let i;
+    for (i = 0; i < steps; i++) {
+        const k = i / (steps - 1);
+        const intermediateColor = [
+            (color1[0] + k * hueDifference) % 360,
+            color1[1] * (1 - k) + color2[1] * k,
+            color1[2] * (1 - k) + color2[2] * k
+        ];
+        result.push(hsluv.hsluvToHex(intermediateColor));
+    }
+    return result;
+}
+
+function makeColorScheme(spec) {
+    const scheme = {};
+    scheme.background = hsluv.hsluvToHex(spec.background);
+    scheme.foreground = hsluv.hsluvToHex(spec.foreground);
+    scheme.center = hsluv.hsluvToHex(spec.center);
+    scheme.regionColors = interpolateColors(spec.background, spec.center, 8);
+    scheme.sound = spec.sound;
+    return scheme;
+}
+
 const COLOR_SCHEMES = {
-    victoria: {
-        center: "#034488",
-        foreground: "#111111",
-        background: "#e0f0ff",
+    victoria: makeColorScheme({
+        background: [340, 30, 90],
+        center: [270, 30, 30],
+        foreground: [190, 10, 10],
         sound: "bell"
-    },
-    adelaide: {
-        center: "#ffffff",
-        foreground: "#ffffff",
-        background: "#440013",
+    }),
+    adelaide: makeColorScheme({
+        background: [0, 40, 5],
+        center: [193, 0, 90],
+        foreground: [190, 30, 95],
         sound: "pad"
-    },
-    massey: {
-        center: "#fff0ef",
-        foreground: "#888888",
-        background: "#131313",
+    }),
+    massey: makeColorScheme({
+        background: [70, 30, 90],
+        center: [0, 10, 30],
+        foreground: [50, 10, 10],
         sound: "pad"
-    },
-    manawatu: {
-        center: "#000000",
-        foreground: "#000000",
-        background: "#ffefff",
+    }),
+    manawatu: makeColorScheme({
+        background: [155, 70, 10],
+        center: [125, 40, 90],
+        foreground: [190, 30, 95],
         sound: "pad"
-    },
-    palmerston_north: {
-        center: "#003300",
-        foreground: "#000000",
-        background: "#aaffaa",
+    }),
+    palmerston_north: makeColorScheme({
+        background: [190, 10, 90],
+        center: [0, 20, 30],
+        foreground: [10, 20, 35],
         sound: "pad"
-    },
-    hamilton: {
-        center: "#330033",
-        foreground: "#000000",
-        background: "#ffeef8",
+    }),
+    hamilton: makeColorScheme({
+        background: [90 + 179, 10, 30],
+        center: [90, 20, 90],
+        foreground: [10, 20, 95],
         sound: "pad"
-    },
+    })
 };
 COLOR_SCHEMES.default = COLOR_SCHEMES.victoria;
 
@@ -121,7 +154,8 @@ class VennDiagram {
 
         function make_venn_curve(i) {
             const path = draw.path(venn_diagram.curve)
-                .fill({ color: colorScheme.center, opacity: 1 / 7 })
+                .attr({ "pointer-events": "none" })
+                .fill({ color: "black", opacity: 0 })
                 .stroke({ opacity: 0, color: colorScheme.center, width: 1.5 / scale })
                 .rotate(360 / 7 * i, 0, 0)
                 .scale(scale, 0, 0)
@@ -129,8 +163,10 @@ class VennDiagram {
             return path;
         }
         function make_region(i) {
+            const order = get_venn_sets(i, venn_diagram.n).reduce((a, b) => a + b);
+
             const path = draw.path(venn_diagram.regions[i])
-                .fill({ opacity: 0 })
+                .fill({ color: colorScheme.regionColors[order] })
                 .stroke({ opacity: 0, color: colorScheme.foreground, width: 3 / scale })
                 .scale(scale, 0, 0)
                 .translate(canvas_size / 2, canvas_size / 2)
@@ -186,6 +222,10 @@ class VennDiagram {
                     }
                 });
         }
+
+        curves.forEach((curve) => {
+            curve.front();
+        });
     }
 
     cleanup() {
