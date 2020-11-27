@@ -32,39 +32,45 @@ function makeColorScheme(spec) {
 }
 
 const COLOR_SCHEMES = {
+    // pink/indigo
     victoria: makeColorScheme({
         background: [340, 30, 90],
         center: [270, 30, 30],
         foreground: [190, 10, 10],
         sound: "bell"
     }),
+    // red/dusty pink
     adelaide: makeColorScheme({
-        background: [0, 40, 5],
-        center: [193, 0, 90],
+        background: [-50, 10, 10],
+        center: [0, 30, 70],
         foreground: [190, 30, 95],
         sound: "pad"
     }),
+    // yellow/beige
     massey: makeColorScheme({
         background: [70, 30, 90],
         center: [0, 10, 30],
         foreground: [50, 10, 10],
         sound: "pad"
     }),
+    // almost black and white, faintly green/yellow
     manawatu: makeColorScheme({
-        background: [155, 70, 10],
-        center: [125, 40, 90],
+        background: [115, 30, 10],
+        center: [90, 10, 80],
         foreground: [190, 30, 95],
         sound: "pad"
     }),
+    // blue
     palmerston_north: makeColorScheme({
-        background: [190, 10, 90],
-        center: [0, 20, 30],
-        foreground: [10, 20, 35],
+        background: [210, 20, 90],
+        center: [280, 20, 30],
+        foreground: [190, 20, 40],
         sound: "pad"
     }),
+    // orange/red/purple
     hamilton: makeColorScheme({
-        background: [90 + 179, 10, 30],
-        center: [90, 20, 90],
+        background: [0, 30, 10],
+        center: [30, 90, 70],
         foreground: [10, 20, 95],
         sound: "pad"
     })
