@@ -6,14 +6,24 @@ This project consists of:
 - a tool for generating attractively rendered symmetric 7-Venn diagrams
 - a web app where said symmetric 7-Venn diagrams are identified with 7-note scales and used as an interface for playing chords.
 
-Running the app
----------------
+Running the web app
+-------------------
 
 This repository contains sound files checked in using git-lfs. To obtain them, you will need to [install git-lfs](git-lfs), and run `git lfs pull` after cloning this repo.
 
 [git-lfs]: https://git-lfs.github.com/
 
 Tone.js uses AJAX to retrieve the samples used for playback, so you will need to run a local web server. To do this, `cd` into the `app` folder and run `python3 -m http.server`, then point your browser to `http://localhost:8000/`.
+
+### Development
+
+Sorry, the Python side of this repo is a bit of a mess. To set up:
+
+- Start a virtualenv and run `pip install -e .`.
+- `cd` into `src/venn7` and run `npm install`.
+- `pip install pytest` and `pytest`.
+
+To recompile Venn diagram shape data, run `python src/venn7/venn.py app/venn_diagrams.js`.
 
 Venn diagrams
 -------------

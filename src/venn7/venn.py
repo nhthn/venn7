@@ -267,14 +267,13 @@ DIAGRAMS = {
 
 if __name__ == "__main__":
     import json
+    import sys
     diagrams_json = {}
     diagrams_json["diagrams_list"] = DIAGRAMS_LIST
     for name, diagram in DIAGRAMS.items():
         diagrams_json[name] = diagram.export_json()
 
-    with open("app/venn_diagrams.js", "w") as f:
+    with open(sys.argv[1], "w") as f:
         f.write("const venn_diagrams = ");
         json.dump(diagrams_json, f)
         f.write(";");
-
-    DIAGRAMS["victoria"].plot()
