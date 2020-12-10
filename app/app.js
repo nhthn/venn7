@@ -169,11 +169,7 @@ class VennDiagram {
             return path;
         }
         function make_region(i) {
-            const order = get_venn_sets(i, venn_diagram.n).reduce((a, b) => a + b);
-
             const path = draw.path(venn_diagram.regions[i])
-                .fill({ color: colorScheme.regionColors[order] })
-                .stroke({ opacity: 0, color: colorScheme.foreground, width: 3 / scale })
                 .scale(scale, 0, 0)
                 .translate(canvas_size / 2, canvas_size / 2)
             return path;
@@ -203,21 +199,38 @@ class VennDiagram {
             this.synths.push(synth);
         }
 
-        const regions = [];
+        curves.forEach((curve) => {
+            curve.front();
+        });
+
+        this.regions = [];
+        this.region_outlines = [];
         for (i = 1; i < Math.pow(2, venn_diagram.n); i++) {
             const sets = get_venn_sets(i, venn_diagram.n);
+            const order = get_venn_sets(i, venn_diagram.n).reduce((a, b) => a + b);
+
             let region = make_region(i);
-            regions.push(region);
-            region
+            region.fill({ color: colorScheme.regionColors[order] });
+            region.stroke({ width: 0.1, color: colorScheme.regionColors[order] });
+            this.regions.push(region);
+            region.back();
+
+            let region_outline = make_region(i);
+            this.region_outlines.push(region_outline);
+            region_outline
+                .fill({ color: "black", opacity: 0 })
+                .stroke({ opacity: 0, color: colorScheme.foreground, width: 3 / scale });
+
+            region_outline
                 .mouseover(() => {
-                    region.stroke({ opacity: 1 });
+                    region_outline.stroke({ opacity: 1 });
                     let i;
                     for (i = 0; i < venn_diagram.n; i++) {
                         curves[i].stroke({ opacity: sets[i] * 0.9 });
                     }
                 })
                 .mouseout(() => {
-                    region.stroke({ opacity: 0 });
+                    region_outline.stroke({ opacity: 0 });
                 })
                 .mousedown(() => {
                     let i;
@@ -228,10 +241,6 @@ class VennDiagram {
                     }
                 });
         }
-
-        curves.forEach((curve) => {
-            curve.front();
-        });
     }
 
     cleanup() {
