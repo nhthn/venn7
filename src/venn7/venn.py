@@ -226,16 +226,25 @@ class VennDiagramRenderer:
     def _get_curve_points_on_cylinder(self, index):
         """Get the set of control points (not Bezier but Metafont control
         points) if the Venn diagram were unraveled on a cylinder. All these
-        points lie on a grid."""
+        points lie on a grid.
+
+        Each point is of the form (x, y, type). x is the circular coordinate
+        which wraps around from 0 to len(self.row_swaps). y is the other,
+        non-circular component which ranges from 0 to self.n - 1 inclusive.
+
+        type is a string used to tag points with information about how the
+        point was generated. This method only generates points of type
+        ``"intersection"``, but later stages can add new types.
+        """
         points = []
         row, column = 0, index * len(self.row_swaps)
         for i in range(self.n):
             for swap_rows in self.row_swaps:
                 if row + 1 in swap_rows:
-                    points.append((row + 1, column))
+                    points.append((row + 1, column, "intersection"))
                     row += 1
                 elif row in swap_rows:
-                    points.append((row, column))
+                    points.append((row, column, "intersection"))
                     row -= 1
                 column += 1
         return points
@@ -248,15 +257,15 @@ class VennDiagramRenderer:
         """
         result = []
         for i in range(len(points)):
-            r0, c0 = points[(i - 1) % len(points)]
-            r1, c1 = points[i]
-            r2, c2 = points[(i + 1) % len(points)]
+            r0, c0, __ = points[(i - 1) % len(points)]
+            r1, c1, __ = point = points[i]
+            r2, c2, __ = points[(i + 1) % len(points)]
             if not (
                 (c1 - c0) % len(points) == 1
                 and (c2 - c1) % len(points) == 1
                 and r2 - r1 == r1 - r0
             ):
-                result.append((r1, c1))
+                result.append(point)
         return result
 
     def _get_tensions(self, points):
@@ -267,8 +276,8 @@ class VennDiagramRenderer:
         """
         tensions = []
         for i in range(len(points)):
-            r1, c1 = points[i]
-            r2, c2 = points[(i + 1) % len(points)]
+            r1, c1, __ = points[i]
+            r2, c2, __ = points[(i + 1) % len(points)]
             if abs(r1 - r2) == abs(c1 - c2):
                 tensions.append(self.tension_diagonal)
             else:
@@ -277,7 +286,7 @@ class VennDiagramRenderer:
 
     def _convert_cylinder_points_to_polar(self, cylinder_points):
         polar_points = []
-        for row, column in cylinder_points:
+        for row, column, __ in cylinder_points:
             radius = self.inner_radius + self.spacing * row
             theta = column * 2 * math.pi / (self.n * len(self.row_swaps))
             x = radius * math.cos(theta)
