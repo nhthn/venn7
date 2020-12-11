@@ -208,7 +208,7 @@ class VennDiagramRenderer:
         venn_diagram,
         inner_radius=30,
         spacing=5,
-        tension_diagonal=1.8,
+        tension_diagonal=3.0,
         tension_default=1.0,
     ):
         self.n = venn_diagram.n
@@ -232,19 +232,21 @@ class VennDiagramRenderer:
         which wraps around from 0 to len(self.row_swaps). y is the other,
         non-circular component which ranges from 0 to self.n - 1 inclusive.
 
-        type is a string used to tag points with information about how the
-        point was generated. This method only generates points of type
-        ``"intersection"``, but later stages can add new types.
+        type is a string used to tag points with information about the point.
+        This method generates two:
+
+        - intersection_+ means that the curve is going up at this point.
+        - intersection_- means that the curve is going down at this point.
         """
         points = []
         row, column = 0, index * len(self.row_swaps)
         for i in range(self.n):
             for swap_rows in self.row_swaps:
                 if row + 1 in swap_rows:
-                    points.append((row + 1, column, "intersection"))
+                    points.append((row + 1, column, "intersection_+"))
                     row += 1
                 elif row in swap_rows:
-                    points.append((row, column, "intersection"))
+                    points.append((row, column, "intersection_-"))
                     row -= 1
                 column += 1
         return points
@@ -268,17 +270,45 @@ class VennDiagramRenderer:
                 result.append(point)
         return result
 
+    def _add_arc_points(self, points):
+        """Given a set of control points on the cylinder, find pairs of points
+        that are horizontal and insert new arc points to help round out the
+        curve in that region. It is assumed that all points are intersection type.
+        """
+        squash_factor = len(self.row_swaps)
+
+        result = []
+        for i in range(len(points)):
+            r1, c1, type_1 = point = points[i]
+            r2, c2, type_2 = points[(i + 1) % len(points)]
+            result.append(point)
+            if r1 == r2:
+                radius = (c2 - c1) % len(self.n * self.row_swaps) * 0.5
+                column = c1 + radius
+                if type_1 == "intersection_+" and type_2 == "intersection_-":
+                    arc_direction = 1
+                    type_ = "arc_+"
+                elif type_1 == "intersection_-" and type_2 == "intersection_+":
+                    arc_direction = -1
+                    type_ = "arc_-"
+                else:
+                    raise RuntimeError
+                row = r1 + arc_direction * radius * 0.5
+                result.append((row, column, type_))
+        return result
+
     def _get_tensions(self, points):
         """Given a set of control points on the cylinder, determine whether
-        two points are diagonal or horizontal. If they are diagonal, their
-        tension is set to ``tension_diagonal``. Otherwise, their tension is
-        ``tension_default``. Collect a list of all tensions and return it.
+        each pair of points is diagonal or horizontal. If they are diagonal and
+        both are of "intersection" type, their tension is set to
+        ``tension_diagonal``. Otherwise, their tension is ``tension_default``.
+        Collect a list of all tensions and return it.
         """
         tensions = []
         for i in range(len(points)):
-            r1, c1, __ = points[i]
-            r2, c2, __ = points[(i + 1) % len(points)]
-            if abs(r1 - r2) == abs(c1 - c2):
+            r1, c1, type_1 = points[i]
+            r2, c2, type_2 = points[(i + 1) % len(points)]
+            if type_1.startswith("intersection_") and type_2.startswith("intersection_") and abs(r1 - r2) == abs(c1 - c2):
                 tensions.append(self.tension_diagonal)
             else:
                 tensions.append(self.tension_default)
@@ -307,6 +337,7 @@ class VennDiagramRenderer:
         """
         cylinder_points = self._get_curve_points_on_cylinder(index)
         cylinder_points = self._remove_colinear_points(cylinder_points)
+        cylinder_points = self._add_arc_points(cylinder_points)
         tensions = self._get_tensions(cylinder_points)
 
         control_points = self._convert_cylinder_points_to_polar(cylinder_points)
