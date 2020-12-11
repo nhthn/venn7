@@ -6,11 +6,14 @@ import numpy.polynomial as polynomial
 import sympy
 import sympy.polys.polytools
 
+
 def get_rotation_matrix(theta):
-    matrix = np.array([
-        [np.cos(theta), -np.sin(theta)],
-        [np.sin(theta), np.cos(theta)],
-    ])
+    matrix = np.array(
+        [
+            [np.cos(theta), -np.sin(theta)],
+            [np.sin(theta), np.cos(theta)],
+        ]
+    )
     return matrix
 
 
@@ -19,7 +22,6 @@ class DegenerateBezierError(Exception):
 
 
 class CubicBezier:
-
     def __init__(self, control_points):
         self.control_points = np.array(control_points)
         if self.control_points.shape != (4, 2):
@@ -34,12 +36,7 @@ class CubicBezier:
     @staticmethod
     def f(t, x0, x1, x2, x3):
         s = 1 - t
-        return (
-            s * s * s * x0
-            + 3 * t * s * s * x1
-            + 3 * t * t * s * x2
-            + t * t * t * x3
-        )
+        return s * s * s * x0 + 3 * t * s * s * x1 + 3 * t * t * s * x2 + t * t * t * x3
 
     def __call__(self, t):
         x = self.f(t, *self.control_points[:, 0])
@@ -102,8 +99,7 @@ class MetafontBezier(CubicBezier):
         point_4 = (1, 0)
         control_points = [point_1, point_2, point_3, point_4]
         control_points = [
-            self.transform_from_normalized_coordinates(*x)
-            for x in control_points
+            self.transform_from_normalized_coordinates(*x) for x in control_points
         ]
         super().__init__(control_points)
 
@@ -114,7 +110,6 @@ class MetafontBezier(CubicBezier):
 
 
 class BezierPath:
-
     def __init__(self, beziers):
         self.beziers = beziers
 
@@ -134,6 +129,7 @@ class BezierPath:
 
     def plot(self):
         import matplotlib.pyplot as plt
+
         for bezier in self.beziers:
             t = np.linspace(0, 1, 20, endpoint=False)
             points = bezier(t)
@@ -161,7 +157,6 @@ class BezierPath:
 
 
 class MetafontSpline(BezierPath):
-
     def __init__(self, points, tensions=None):
         self.points = np.array(points)
         n = self.number_of_points = self.points.shape[0]
@@ -192,8 +187,10 @@ class MetafontSpline(BezierPath):
 
         def theta(i):
             return i % n
+
         def phi(i):
             return n + i % n
+
         def d(i):
             return distances[i % n]
 
@@ -212,14 +209,14 @@ class MetafontSpline(BezierPath):
                 theta(i - 1),
                 self.tension_before[i],
                 self.tension_after[(i - 1) % n],
-                scale=1 / d(i - 1)
+                scale=1 / d(i - 1),
             )
             stamp_mock_curvature(
                 theta(i),
                 phi(i + 1),
                 self.tension_after[i],
                 self.tension_before[(i + 1) % n],
-                scale=-1 / d(i)
+                scale=-1 / d(i),
             )
             b[row] = 0
             row += 1
@@ -244,7 +241,7 @@ class MetafontSpline(BezierPath):
                 point_2[1],
                 self.theta[i],
                 self.phi[(i + 1) % n],
-                relative_angles=True
+                relative_angles=True,
             )
             beziers.append(bezier)
 

@@ -16,6 +16,7 @@ from venn7.bezier import BezierPath
 
 ROOT = pathlib.Path(os.path.realpath(__file__)).parent
 
+
 class VennDiagram:
     """A simple symmetric monotone Venn diagram. The diagram is encoded discretely
     using a set of "row swaps." Creation of path data is performed on the fly.
@@ -37,7 +38,9 @@ class VennDiagram:
         self.name = name
         self.n = n
 
-        self.row_swaps = self.parse_mini_matrix_encoding_string(mini_matrix_encoding_string)
+        self.row_swaps = self.parse_mini_matrix_encoding_string(
+            mini_matrix_encoding_string
+        )
         self.flattened_row_swaps = [y for x in self.row_swaps for y in x]
 
         self.validate_basic()
@@ -69,12 +72,16 @@ class VennDiagram:
         n = self.n
         expected_length = (2 ** n - 2) // n
         if len(self.flattened_row_swaps) != expected_length:
-            raise ValueError(f"Wrong length: flattened_row_swaps should be of length {expected_length}")
+            raise ValueError(
+                f"Wrong length: flattened_row_swaps should be of length {expected_length}"
+            )
 
         last_x = self.flattened_row_swaps[-1]
         for x in self.flattened_row_swaps:
             if last_x == x:
-                raise ValueError("Immediate repetitions are not allowed in flattened_row_swaps")
+                raise ValueError(
+                    "Immediate repetitions are not allowed in flattened_row_swaps"
+                )
             last_x = x
 
         for k in range(1, n - 1):
@@ -183,7 +190,9 @@ class VennDiagram:
         import matplotlib.collections
 
         fig, ax = plt.subplots()
-        polygons = [matplotlib.patches.Polygon(self.get_polygon(i)) for i in range(diagram.n)]
+        polygons = [
+            matplotlib.patches.Polygon(self.get_polygon(i)) for i in range(diagram.n)
+        ]
         patches = matplotlib.collections.PatchCollection(polygons, alpha=0.2)
         ax.add_collection(patches)
         plt.xlim(-100, 100)
@@ -192,17 +201,16 @@ class VennDiagram:
 
 
 class VennDiagramRenderer:
-    """A class that renders discrete Venn diagrams to splines.
-    """
+    """A class that renders discrete Venn diagrams to splines."""
 
     def __init__(
-            self,
-            venn_diagram,
-            inner_radius=30,
-            spacing=5,
-            tension_diagonal=1.8,
-            tension_default=1.0,
-        ):
+        self,
+        venn_diagram,
+        inner_radius=30,
+        spacing=5,
+        tension_diagonal=1.8,
+        tension_default=1.0,
+    ):
         self.n = venn_diagram.n
         self.row_swaps = venn_diagram.row_swaps
 
@@ -312,20 +320,25 @@ DIAGRAMS = {
     "victoria": VennDiagram(7, "100000 110010 110111 101111 001101 000100", "Victoria"),
     "adelaide": VennDiagram(7, "10000 11010 11111 11111 01101 00100", "Adelaide"),
     "massey": VennDiagram(7, "100000 110001 110111 111110 111000 010000", "Massey"),
-    "manawatu": VennDiagram(7, "1000000 1000101 1101101 0111011 0011010 0010000", "Manawatu"),
-    "palmerston_north": VennDiagram(7, "1000000 1100010 1110110 1011101 0001101 0000100", "Palmerston North"),
+    "manawatu": VennDiagram(
+        7, "1000000 1000101 1101101 0111011 0011010 0010000", "Manawatu"
+    ),
+    "palmerston_north": VennDiagram(
+        7, "1000000 1100010 1110110 1011101 0001101 0000100", "Palmerston North"
+    ),
     "hamilton": VennDiagram(7, "10000 10101 11111 11111 11010 10000", "Hamilton"),
 }
 
 if __name__ == "__main__":
     import json
     import sys
+
     diagrams_json = {}
     diagrams_json["diagrams_list"] = DIAGRAMS_LIST
     for name, diagram in DIAGRAMS.items():
         diagrams_json[name] = diagram.export_json()
 
     with open(sys.argv[1], "w") as f:
-        f.write("const venn_diagrams = ");
+        f.write("const venn_diagrams = ")
         json.dump(diagrams_json, f)
-        f.write(";");
+        f.write(";")
