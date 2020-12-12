@@ -1,4 +1,4 @@
-function interpolateColors(color1, color2, steps) {
+function interpolateColors(color1, color2, steps, longHue) {
     const result = [];
 
     let hueDifference = color2[0] - color1[0];
@@ -6,6 +6,9 @@ function interpolateColors(color1, color2, steps) {
         hueDifference = hueDifference - 360;
     } else if (hueDifference < -180) {
         hueDifference = hueDifference + 360;
+    }
+    if (longHue) {
+        hueDifference = 360 + hueDifference;
     }
 
     let i;
@@ -26,7 +29,7 @@ function makeColorScheme(spec) {
     scheme.background = hsluv.hsluvToHex(spec.background);
     scheme.foreground = hsluv.hsluvToHex(spec.foreground);
     scheme.center = hsluv.hsluvToHex(spec.center);
-    scheme.regionColors = interpolateColors(spec.background, spec.center, 8);
+    scheme.regionColors = interpolateColors(spec.background, spec.center, spec.order + 1, !!spec.longHue);
     scheme.sound = spec.sound;
     return scheme;
 }
@@ -37,42 +40,57 @@ const COLOR_SCHEMES = {
         background: [340, 30, 90],
         center: [270, 30, 30],
         foreground: [190, 10, 10],
-        sound: "bell"
+        sound: "bell",
+        order: 7
     }),
     // red/dusty pink
     adelaide: makeColorScheme({
         background: [-50, 10, 10],
         center: [0, 30, 70],
         foreground: [190, 30, 95],
-        sound: "pad"
+        sound: "pad",
+        order: 7
     }),
     // yellow/beige
     massey: makeColorScheme({
         background: [70, 30, 90],
         center: [0, 10, 30],
         foreground: [50, 10, 10],
-        sound: "pad"
+        sound: "pad",
+        order: 7
     }),
     // almost black and white, faintly green/yellow
     manawatu: makeColorScheme({
         background: [115, 30, 10],
         center: [90, 10, 80],
         foreground: [190, 30, 95],
-        sound: "pad"
+        sound: "pad",
+        order: 7
     }),
     // blue
     palmerston_north: makeColorScheme({
         background: [210, 20, 90],
         center: [280, 20, 30],
         foreground: [190, 20, 40],
-        sound: "pad"
+        sound: "pad",
+        order: 7
     }),
     // orange/red/purple
     hamilton: makeColorScheme({
         background: [0, 30, 10],
         center: [30, 90, 70],
         foreground: [10, 20, 95],
-        sound: "pad"
+        sound: "pad",
+        order: 7
+    }),
+    // orange/red/purple
+    "5": makeColorScheme({
+        background: [145, 30, 95],
+        center: [30, 30, 30],
+        foreground: [10, 20, 10],
+        longHue: true,
+        sound: "pad",
+        order: 5
     })
 };
 COLOR_SCHEMES.default = COLOR_SCHEMES.victoria;
@@ -163,7 +181,7 @@ class VennDiagram {
                 .attr({ "pointer-events": "none" })
                 .fill({ color: "black", opacity: 0 })
                 .stroke({ opacity: 0, color: colorScheme.center, width: 1.5 / scale })
-                .rotate(360 / 7 * i, 0, 0)
+                .rotate(360 / venn_diagram.n * i, 0, 0)
                 .scale(scale, 0, 0)
                 .translate(canvas_size / 2, canvas_size / 2);
             return path;
@@ -190,7 +208,7 @@ class VennDiagram {
                 tmp = Math.floor(tmp / 2);
             }
             return result;
-        };
+        }
 
         this.synths = [];
         for (i = 0; i < venn_diagram.n; i++) {

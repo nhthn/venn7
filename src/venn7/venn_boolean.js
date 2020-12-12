@@ -15,7 +15,7 @@ const venn_diagram = JSON.parse(fs.readFileSync(0, "utf-8"));
 
 function make_venn_curve(i) {
     const path = new paper.Path(venn_diagram.curve);
-    path.rotate(360 / 7 * i, new paper.Point(0, 0));
+    path.rotate(360 / venn_diagram.n * i, new paper.Point(0, 0));
     return path;
 }
 
