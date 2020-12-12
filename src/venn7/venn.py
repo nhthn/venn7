@@ -243,25 +243,6 @@ class VennDiagramRenderer:
                 column += 1
         return points
 
-    def _remove_colinear_points(self, points):
-        """Given a set of control points on the cylinder, find sequences of
-        colinear points in a diagonally ascending or descending pattern.
-        Remove the interiors of these sequences. This results in better behavior
-        of the MetafontSpline.
-        """
-        result = []
-        for i in range(len(points)):
-            r0, c0, __ = points[(i - 1) % len(points)]
-            r1, c1, __ = point = points[i]
-            r2, c2, __ = points[(i + 1) % len(points)]
-            if not (
-                (c1 - c0) % len(points) == 1
-                and (c2 - c1) % len(points) == 1
-                and r2 - r1 == r1 - r0
-            ):
-                result.append(point)
-        return result
-
     def _add_arc_points(self, points):
         """Given a set of control points on the cylinder, find pairs of points
         that are horizontal and insert new arc points to help round out the
@@ -274,7 +255,7 @@ class VennDiagramRenderer:
             r1, c1, type_1 = point = points[i]
             r2, c2, type_2 = points[(i + 1) % len(points)]
             result.append(point)
-            if r1 == r2:
+            if r1 == r2 and r1 == self.n - 1:
                 radius = (c2 - c1) % len(self.n * self.row_swaps) * 0.5
                 column = c1 + radius
                 if type_1 == "intersection_+" and type_2 == "intersection_-":
@@ -285,8 +266,11 @@ class VennDiagramRenderer:
                     type_ = "arc_-"
                 else:
                     raise RuntimeError
-                row = r1 + arc_direction * radius * 0.5
-                result.append((row, column, type_))
+                vertical_radius = arc_direction * radius * 0.5
+                ratio = 0.6
+                result.append((r1 + vertical_radius * ratio, column - radius * ratio, type_))
+                result.append((r1 + vertical_radius, column, type_))
+                result.append((r1 + vertical_radius * ratio, column + radius * ratio, type_))
         return result
 
     def _get_tensions(self, points):
@@ -300,7 +284,10 @@ class VennDiagramRenderer:
         for i in range(len(points)):
             r1, c1, type_1 = points[i]
             r2, c2, type_2 = points[(i + 1) % len(points)]
-            if type_1.startswith("intersection_") and type_2.startswith("intersection_") and abs(r1 - r2) == abs(c1 - c2):
+            if (
+                type_1.startswith("intersection_") and type_2.startswith("intersection_")
+                and type_1 == type_2
+            ):
                 tensions.append(self.tension_diagonal)
             else:
                 tensions.append(self.tension_default)
@@ -328,7 +315,6 @@ class VennDiagramRenderer:
             other than 0 are rotations of each other.
         """
         cylinder_points = self._get_curve_points_on_cylinder(index)
-        cylinder_points = self._remove_colinear_points(cylinder_points)
         cylinder_points = self._add_arc_points(cylinder_points)
         tensions = self._get_tensions(cylinder_points)
 
