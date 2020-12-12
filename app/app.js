@@ -101,7 +101,7 @@ class VennDiagramApp {
                 that.loadPreviousDiagram();
             } else if (event.key === "ArrowRight") {
                 event.preventDefault();
-                that.loadPreviousDiagram();
+                that.loadNextDiagram();
             }
         });
     }
