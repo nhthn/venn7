@@ -29,34 +29,26 @@ class VennDiagram:
     n : int
         The order of the Venn diagram. Must be prime.
 
-    mini_matrix_encoding_string : str
-        A string containing whitespace-separated rows of the "mini matrix encoding."
+    matrix_encoding_string : str
+        A string containing whitespace-separated rows of the "matrix encoding."
         See README for example.
     """
 
-    def __init__(self, n, mini_matrix_encoding_string, name=None):
+    def __init__(self, n, matrix_encoding_string, name=None):
         self.name = name
         self.n = n
 
-        self.row_swaps = self.parse_mini_matrix_encoding_string(
-            mini_matrix_encoding_string
+        self.row_swaps = self.parse_matrix_encoding_string(
+            matrix_encoding_string
         )
         self.flattened_row_swaps = [y for x in self.row_swaps for y in x]
 
         self.validate_basic()
         self.validate_venn()
 
-    def parse_mini_matrix_encoding_string(self, mini_matrix_encoding_string):
-        rows = mini_matrix_encoding_string.strip().split()
-        matrix = []
-        for i, row in enumerate(rows):
-            interpolated_row = "0".join(row)
-            if i % 2 == 0:
-                interpolated_row = "0" + interpolated_row
-            else:
-                interpolated_row = interpolated_row + "0"
-            interpolated_row = [int(x) for x in interpolated_row]
-            matrix.append(interpolated_row)
+    def parse_matrix_encoding_string(self, matrix_encoding_string):
+        rows = matrix_encoding_string.strip().splitlines()
+        matrix = [[int(c) for c in line.strip()] for line in rows]
 
         row_swaps = []
         for column in range(len(matrix[0])):
@@ -357,16 +349,78 @@ DIAGRAMS_LIST = [
 ]
 
 DIAGRAMS = {
-    "victoria": VennDiagram(7, "100000 110010 110111 101111 001101 000100", "Victoria"),
-    "adelaide": VennDiagram(7, "10000 11010 11111 11111 01101 00100", "Adelaide"),
-    "massey": VennDiagram(7, "100000 110001 110111 111110 111000 010000", "Massey"),
+    "victoria": VennDiagram(
+        7,
+        """
+        010000000000
+        101000001000
+        010100010101
+        100010101010
+        000001010001
+        000000100000
+        """,
+        "Victoria",
+        ),
+    "adelaide": VennDiagram(
+        7,
+        """
+        0100000000
+        1010001000
+        0101010101
+        1010101010
+        0001010001
+        0000100000
+        """,
+        "Adelaide",
+    ),
+    "massey": VennDiagram(
+        7,
+        """
+        010000000000
+        101000000010
+        010100010101
+        101010101000
+        010101000000
+        001000000000
+        """,
+        "Massey",
+    ),
     "manawatu": VennDiagram(
-        7, "1000000 1000101 1101101 0111011 0011010 0010000", "Manawatu"
+        7,
+        """
+        01000000000000
+        10000000100010
+        01010001010001
+        00101010001010
+        00000101000100
+        00001000000000
+        """,
+        "Manawatu",
     ),
     "palmerston_north": VennDiagram(
-        7, "1000000 1100010 1110110 1011101 0001101 0000100", "Palmerston North"
+        7,
+        """
+        01000000000000
+        10100000001000
+        01010100010100
+        10001010100010
+        00000001010001
+        00000000100000
+        """,
+        "Palmerston North",
     ),
-    "hamilton": VennDiagram(7, "10000 10101 11111 11111 11010 10000", "Hamilton"),
+    "hamilton": VennDiagram(
+        7,
+        """
+        0100000000
+        1000100010
+        0101010101
+        1010101010
+        0101000100
+        1000000000
+        """,
+        "Hamilton",
+    ),
 }
 
 if __name__ == "__main__":
