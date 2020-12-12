@@ -34,7 +34,7 @@ class VennDiagram:
         See README for example.
     """
 
-    def __init__(self, n, matrix_encoding_string, name=None, **renderer_params):
+    def __init__(self, n, matrix_encoding_string, name=None, renderer_args=None):
         self.name = name
         self.n = n
 
@@ -43,7 +43,9 @@ class VennDiagram:
         )
         self.flattened_row_swaps = [y for x in self.row_swaps for y in x]
 
-        self.renderer_params = renderer_params
+        self.renderer_args = renderer_args
+        if self.renderer_args is None:
+            self.renderer_args = {}
 
         self.validate_basic()
         self.validate_venn()
@@ -114,7 +116,7 @@ class VennDiagram:
         return full_flattened_row_swaps
 
     def get_spline(self, index=0):
-        renderer = VennDiagramRenderer(self, **self.renderer_params)
+        renderer = VennDiagramRenderer(self, **self.renderer_args)
         return renderer.get_spline()
 
     def get_polygon(self, index=0):
@@ -419,8 +421,12 @@ DIAGRAMS = {
         0001
         """,
         "Symmetrical 5-Venn diagram",
-        inner_radius=10,
-        spacing=8,
+        renderer_args={
+            "inner_radius": 10,
+            "spacing": 8,
+            "tension_diagonal": 1,
+            "tension_default": 1,
+        },
     ),
 }
 
