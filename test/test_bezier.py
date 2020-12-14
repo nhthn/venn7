@@ -24,6 +24,19 @@ class TestCubicBezier:
             + bezier(np.linspace(1.0, 0.5, 10)) * np.array([-1, 1]),
         )
 
+    def test_get_furthest_point(self):
+        bezier = venn7.bezier.CubicBezier(
+            [
+                (0.0, 0.0),
+                (1.0, 1.0),
+                (2.0, 1.0),
+                (3.0, 0.0),
+            ]
+        )
+        point = (1.5, -3.0)
+        furthest_point = bezier.get_furthest_point_from(point)
+        np.testing.assert_allclose(furthest_point[0], 1.5)
+
 
 class TestMetafontSpline:
     def test_basic(self):

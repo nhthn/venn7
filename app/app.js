@@ -163,7 +163,7 @@ class VennDiagram {
         const canvas_size = 800;
         const draw = SVG().addTo("#canvas-container").size(canvas_size, canvas_size);
         this.draw = draw;
-        const scale = 5;
+        const scale = 350 / 50;
 
         function updateSize() {
             const size = Math.min(window.innerHeight, window.innerWidth);

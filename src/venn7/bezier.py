@@ -3,8 +3,6 @@ import math
 import subprocess
 import numpy as np
 import numpy.polynomial as polynomial
-import sympy
-import sympy.polys.polytools
 
 
 def get_rotation_matrix(theta):
@@ -42,6 +40,35 @@ class CubicBezier:
         x = self.f(t, *self.control_points[:, 0])
         y = self.f(t, *self.control_points[:, 1])
         return np.squeeze(np.vstack([x, y]).T)
+
+    def get_furthest_point_from(self, point):
+        """Given a point, find the point on this Bezier curve that is furthest
+        from that point.
+
+        The function to maximize is (f_x(t) - x) ** 2 + (f_y(t) - y) ** 2.
+
+        Set derivative to zero:
+
+            f_x'(t) (f_x(t) - x) + f_y'(t) (f_y(t) - y) = 0
+
+        This is a 5th-degree polynomial. Find real roots in the interval [0, 1].
+        Take all these real roots (some of which may be local maxima) along with
+        f(0) and f(1) and find the furthest point.
+        """
+        x, y = point
+        t = np.polynomial.Polynomial([0, 1])
+        f_x = self.f(t, *self.control_points[:, 0])
+        f_y = self.f(t, *self.control_points[:, 1])
+        df_x = f_x.deriv()
+        df_y = f_y.deriv()
+        distance = (f_x - x) ** 2 + (f_y - y) ** 2
+        optimizer = df_x * (f_x - x) + df_y * (f_y - y)
+        roots = optimizer.roots()
+        roots = np.real(roots[np.isreal(roots)])
+        roots = roots[(0 < roots) & (roots < 1)]
+        roots = np.concatenate([roots, [0, 1]])
+        t = roots[np.argmax(distance(roots))]
+        return (f_x(t), f_y(t))
 
 
 class MetafontBezier(CubicBezier):
@@ -154,6 +181,20 @@ class BezierPath:
                 parts.append(round(bezier.control_points[i, 0], 3))
                 parts.append(round(bezier.control_points[i, 1], 3))
         return " ".join([str(x) for x in parts])
+
+    def get_furthest_point_from(self, point):
+        best = None
+        best_distance = 0
+        for bezier in self.beziers:
+            candidate = bezier.get_furthest_point_from(point)
+            distance = (
+                (candidate[0] - point[0]) ** 2
+                + (candidate[1] - point[1]) ** 2
+            )
+            if distance > best_distance:
+                best = candidate
+                best_distance = distance
+        return best
 
 
 class MetafontSpline(BezierPath):

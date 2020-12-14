@@ -307,6 +307,16 @@ class VennDiagramRenderer:
             polar_points.append((x, y))
         return polar_points
 
+    def _normalize_rotation_and_scaling(self, spline):
+        """Given a spline, rotate and uniformly scale it so that its furthest
+        point from the origin is transformed to (0, -50)."""
+        x, y = spline.get_furthest_point_from((0, 0))
+        angle = np.arctan2(y, x)
+        scale = np.hypot(x, y)
+        return spline.transform(
+            venn7.bezier.get_rotation_matrix(-np.pi * 0.5 - angle) * 50 / scale
+        )
+
     def get_spline(self, index=0):
         """Render a single curve of the Venn diagram to a BezierSpline
         and return the result.
@@ -324,6 +334,8 @@ class VennDiagramRenderer:
 
         control_points = self._convert_cylinder_points_to_polar(cylinder_points)
         spline = MetafontSpline(control_points, tensions)
+
+        spline = self._normalize_rotation_and_scaling(spline)
         spline = spline.translate(np.array([self.fudge_factor, 0]))
 
         return spline
