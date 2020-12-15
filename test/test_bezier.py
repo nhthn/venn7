@@ -51,3 +51,22 @@ class TestMetafontSpline:
         np.testing.assert_allclose(
             spline.beziers[0].control_points[0, :], spline.points[0]
         )
+
+
+class TestSVGPathParser:
+    def test_basic(self):
+        parser = venn7.bezier.SVGPathParser("""
+            M 1, 1
+            c 1.0 1.0 2 2 3 3
+            c1,1,2,2,3,3z
+        """)
+        path = venn7.bezier.BezierPath(parser.parse())
+        np.testing.assert_allclose(
+            path.beziers[0].control_points,
+            np.array([
+                [1.0, 1.0],
+                [2.0, 2.0],
+                [3.0, 3.0],
+                [4.0, 4.0],
+            ])
+        )

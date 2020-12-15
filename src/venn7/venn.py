@@ -176,7 +176,16 @@ class VennDiagram:
             input=json.dumps(result),
             encoding="utf-8",
         )
-        result["regions"] = json.loads(process.stdout)
+
+        regions = json.loads(process.stdout)
+
+        processed_regions = [""]
+        for region in regions[1:]:
+            path = venn7.bezier.BezierPath.from_svg_path(region)
+            path = path.remove_tiny_segments(threshold=1)
+            processed_regions.append(path.as_svg_path())
+
+        result["regions"] = processed_regions
 
         return result
 

@@ -1,5 +1,6 @@
 import json
 import math
+import re
 import subprocess
 import numpy as np
 import numpy.polynomial as polynomial
@@ -13,10 +14,6 @@ def get_rotation_matrix(theta):
         ]
     )
     return matrix
-
-
-class DegenerateBezierError(Exception):
-    pass
 
 
 class CubicBezier:
@@ -69,6 +66,12 @@ class CubicBezier:
         roots = np.concatenate([roots, [0, 1]])
         t = roots[np.argmax(distance(roots))]
         return (f_x(t), f_y(t))
+
+    def is_tiny(self, threshold):
+        source = self.control_points[0, :]
+        target = self.control_points[3, :]
+        distance = np.sqrt(np.sum(np.square(source - target)))
+        return distance < threshold
 
 
 class MetafontBezier(CubicBezier):
@@ -136,9 +139,98 @@ class MetafontBezier(CubicBezier):
         return (x, y)
 
 
+RE_FLOAT = re.compile(r"-?\d+(\.\d+)?")
+RE_IGNORE = re.compile(r"[,\s]*")
+
+
+class ParsingDone(Exception):
+    pass
+
+
+class SVGPathParser:
+    """A parser that can process a very small subset of SVG paths -- just
+    enough to get info out of Paper.js."""
+
+    def __init__(self, text):
+        self.text = text
+        self.text_position = 0
+        self.position = np.array([0.0, 0.0])
+        self.beziers = []
+
+    def start_token(self):
+        match = RE_IGNORE.match(self.text, pos=self.text_position)
+        self.text_position = match.end()
+        if self.done():
+            raise ParsingDone()
+
+    def floats(self, n):
+        result = []
+        for i in range(n):
+            self.start_token()
+            match = RE_FLOAT.match(self.text, pos=self.text_position)
+            if match is None:
+                raise ParsingDone()
+            self.text_position = match.end()
+            result.append(float(match.group(0)))
+        return result
+
+    def done(self):
+        return self.text_position >= len(self.text)
+
+    def step(self):
+        try:
+            self.start_token()
+        except ParsingDone:
+            return
+        code = self.text[self.text_position]
+        self.text_position += 1
+        if code == "M":
+            self.position = np.array(self.floats(2))
+        elif code == "c":
+            flattened_relative_control_points = np.concatenate([
+                [0.0, 0.0],
+                self.floats(6)
+            ])
+            relative_control_points = np.reshape(
+                flattened_relative_control_points, (2, 4), "F"
+            )
+            control_points = self.position[:, np.newaxis] + relative_control_points
+            bezier = CubicBezier(control_points.T)
+            self.position = control_points[:, 3]
+            self.beziers.append(bezier)
+        elif code == "l":
+            destination = self.position + np.array(self.floats(2))
+            control_points = np.array([
+                self.position,
+                self.position,
+                destination,
+                destination
+            ])
+            bezier = CubicBezier(control_points)
+            self.position = destination
+            self.beziers.append(bezier)
+        elif code == "z":
+            pass
+        else:
+            raise ValueError(f"Unexpected '{code}'")
+
+    def parse(self):
+        while not self.done():
+            self.step()
+        return self.beziers
+
+
 class BezierPath:
+    """A closed path consisting of cubic Bezier curves."""
+
     def __init__(self, beziers):
         self.beziers = beziers
+
+    @classmethod
+    def from_svg_path(cls, svg_path):
+        parser = SVGPathParser(svg_path)
+        beziers = parser.parse()
+        return cls(beziers)
 
     def transform(self, matrix):
         new_beziers = []
@@ -180,6 +272,7 @@ class BezierPath:
             for i in range(1, 4):
                 parts.append(round(bezier.control_points[i, 0], 3))
                 parts.append(round(bezier.control_points[i, 1], 3))
+        parts.append("Z")
         return " ".join([str(x) for x in parts])
 
     def get_furthest_point_from(self, point):
@@ -195,6 +288,12 @@ class BezierPath:
                 best = candidate
                 best_distance = distance
         return best
+
+    def remove_tiny_segments(self, threshold):
+        filtered_beziers = [
+            x for x in self.beziers if not x.is_tiny(threshold)
+        ]
+        return BezierPath(filtered_beziers)
 
 
 class MetafontSpline(BezierPath):
