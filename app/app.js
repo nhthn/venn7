@@ -188,6 +188,7 @@ class VennDiagram {
         }
         function make_region(i) {
             const path = draw.path(venn_diagram.regions[i])
+                .stroke({ linejoin: "round", linecap: "round" })
                 .scale(scale, 0, 0)
                 .translate(canvas_size / 2, canvas_size / 2)
             return path;
