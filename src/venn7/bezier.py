@@ -381,6 +381,8 @@ class MetafontSpline(BezierPath):
                 point_2[1],
                 self.theta[i],
                 self.phi[(i + 1) % n],
+                tension_1=self.tension_after[i],
+                tension_2=self.tension_before[(i + 1) % n],
                 relative_angles=True,
             )
             beziers.append(bezier)
