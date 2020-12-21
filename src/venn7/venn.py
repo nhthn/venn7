@@ -213,7 +213,7 @@ class VennDiagramRenderer:
         venn_diagram,
         inner_radius=30,
         spacing=5,
-        tension_diagonal=3.0,
+        tension_diagonal=1.0,
         tension_default=1.0,
     ):
         self.n = venn_diagram.n
@@ -268,7 +268,7 @@ class VennDiagramRenderer:
             r1, c1, type_1 = point = points[i]
             r2, c2, type_2 = points[(i + 1) % len(points)]
             result.append(point)
-            if r1 == r2 and r1 == self.n - 1:
+            if r1 == r2:
                 radius = (c2 - c1) % len(self.n * self.row_swaps) * 0.5
                 column = c1 + radius
                 if type_1 == "intersection_+" and type_2 == "intersection_-":
