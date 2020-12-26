@@ -6,10 +6,14 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
-        <div id="canvas-container"></div>
-        <h1 id="diagram-name"></h1>
-        <button class="navigator" id="previous-diagram">◀</button>
-        <button class="navigator" id="next-diagram">▶</button>
+        <div id="container">
+            <div id="header">
+                <button class="navigator" id="previous-diagram">◀</button>
+                <h1 id="diagram-name"></h1>
+                <button class="navigator" id="next-diagram">▶</button>
+            </div>
+            <div id="canvas-container"></div>
+        </div>
         <script src="hsluv-0.1.0.min.js"></script>
         <script src="svg.min.js"></script>
         <script src="Tone.js"></script>

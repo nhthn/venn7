@@ -7,41 +7,36 @@ body {
     overflow: hidden;
 }
 
-#canvas-container {
-    text-align: center;
+#container {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100%;
+}
+
+#canvas-container {
+    text-align: center;
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+}
+
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
 }
 
 .navigator {
     font-size: 20pt;
     border: none;
     background: none;
-    position: absolute;
-    top: 0;
-    width: 2em;
-    height: 2em;
-    display: table-cell;
-    vertical-align: center;
-    text-align: center;
     cursor: pointer;
 }
 
-#previous-diagram {
-    left: 0;
-}
-
-#next-diagram {
-    right: 0;
-}
-
 #diagram-name {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100%;
     font-size: 20pt;
     font-weight: normal;
-    height: 2em;
     text-align: center;
 }

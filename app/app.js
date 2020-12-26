@@ -149,7 +149,7 @@ class VennDiagramApp {
     }
 
     applyColorScheme(colorScheme) {
-        document.querySelector("#canvas-container")
+        document.querySelector("body")
             .style.backgroundColor = colorScheme.background;
         for (let selector of ["#diagram-name", "#previous-diagram", "#next-diagram"]) {
             document.querySelector(selector)
@@ -187,7 +187,10 @@ class VennDiagram {
         this.player = new VennPlayer(this.n, `sounds/${colorScheme.sound}`);
 
         function updateSize() {
-            const size = Math.min(window.innerHeight, window.innerWidth);
+            const size = Math.min(
+                window.innerWidth,
+                window.innerHeight - document.getElementById("header").clientHeight
+            );
             draw.node.setAttribute("width", size);
             draw.node.setAttribute("height", size);
             draw.node.setAttribute("viewBox", `0 0 ${canvas_size} ${canvas_size}`);
