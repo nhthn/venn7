@@ -64,7 +64,7 @@ const COLOR_SCHEMES = {
         background: [115, 30, 10],
         center: [90, 10, 80],
         foreground: [190, 30, 95],
-        sound: "pad",
+        sound: "reed",
         order: 7
     }),
     // blue
