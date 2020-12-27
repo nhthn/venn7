@@ -21,7 +21,15 @@
             <div id="explanation-inner">
                 <h1>Venn 7 - Exploring Symmetric 7-Venn Diagrams with a Musical Interface</h1>
 
+                <p><em>Venn 7</em> is a Web app for exploring symmetric 7-Venn diagrams by mapping them to musical chords.</p>
+
+                <p>Click on regions in the diagrams to play chords, and use the arrows to navigate between the six 7-Venn diagram and one 5-Venn diagram.</p>
+
+                <h2>Venn diagrams</h2>
+
                 <p>You may be familiar with the following Venn diagrams, which visualize all possible intersections of two and three sets:</p>
+
+                [image]
 
                 <p>To introduce some clear terminology, the boundary of each set is referred to as a "curve," and the shapes formed by interesctions and differences of curves are the "regions." The 2-Venn diagram has three regions and the 3-Venn diagram seven regions. In general, an <em>n</em>-Venn diagram has exactly 2<sup><em>n</em></sup> - 1 regions. Finally, we'll define the "order" of a region as the number of curves it is contained in.</p>
 
@@ -76,6 +84,25 @@
 
                 <p>If you are curious about the <em>n</em> = 11 case, Mamakani and Ruskey discovered the first golden 11-Venn diagram, along with over 200,000 more. Unfortunately, these diagrams are less tenable as interactive Web apps, since most of the 2,047 regions are very small.</p>
 
+                <h2>About the app</h2>
+
+                <p>Pandiatonicism is a broad variety of musical practices that use the diatonic scale in ways "beyond" tonal harmony. A common pandiatonic technique is to treat the seven tones as roughly uniform,just as dodecaphony views the 12-tone chromatic scale. This idea is realized in pitch class set theory mod 7 (Santa, 2000), which adapts classical 12-tone set theory to pandiatonic music by thinking of diatonic chords as subsets of the scale.</p>
+
+                <p>My friend Nathan Turczan originally inspired this project by pointing out that the curves of a 7-fold Venn diagram can be mapped to a diatonic scale, making the Venn diagram into a playable visualization of set theory mod 7. I loved the idea, and it stuck with me for a good two years until I finally caved and built it. Just as we anticipated, the resulting interface is as awkward and strange as it is fascinating. It is definitely not meant to be a serious contender for a viable musical interface, but more of a net art project on its own.</p>
+
+                <p>I noticed early on that, when playing standard synthesizer tones on the diagram, there is a discontinuity as the scale wraps back to the octave. For example, there are seven regions on a diagram representing diatonic seconds, but one of those has to be a seventh, breaking the symmetry. To address this, I decided to use Shepard tones, an auditory illusion where a note has ambiguous octavation. This closes the seam formed by the octave and makes the tones reflect the symmetry of the diagram. (Shepard tones are not to be confused with Shepard-Risset tones, which is the same auditory illusion but with continuously ascending pitch.)</p>
+
+                <h2>References</h2>
+
+                <ul>
+                    <li>Venn, John. <em>Symbolic Logic</em>. https://archive.org/details/symboliclogic00venngoog</li>
+                    <li>Venn, John. "On the diagrammatic and mechanical representation of propositions and reasonings." <em>Philosophical Magazine.</em></li>
+                    <li>Cao, Tao et al. "Symmetric Monotone Venn Diagrams with Seven Curves."</li>
+                    <li>Grunbaum, Branko. "The search for symmetric Venn diagrams."</li>
+                    <li>Ruskey, Frank and Weston, Mark. "A Survey of Venn Diagrams." https://www.combinatorics.org/files/Surveys/ds5/VennSymmExamples.html</li>
+                    <li>Hobby, John D. "Smooth, Easy to Compute Interpolating Splines."</li>
+                    <li>Santa, Matthew. "Analysing Post-Tonal Diatonic Music: A Modulo 7 Perspective." https://www.jstor.org/stable/854427?seq=1</li>
+                    <li>Ahmadi Mamakani, Abdolkhalegh. "Searching for Simple Symmetric Venn Diagrams." https://dspace.library.uvic.ca:8443/handle/1828/4709</li>
             </div>
         </article>
         <script src="hsluv-0.1.0.min.js"></script>
