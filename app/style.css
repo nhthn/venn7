@@ -5,14 +5,6 @@
     padding: 0;
 }
 
-p {
-    margin: 1em 0;
-}
-
-ul, ol {
-    margin-left: 3em;
-}
-
 body {
     overflow: hidden;
     font-family: "Vollkorn", serif;
@@ -49,6 +41,7 @@ h1, h2, h3 {
     border: none;
     background: none;
     cursor: pointer;
+    color: inherit;
 }
 
 #diagram-name {
@@ -115,4 +108,16 @@ h1, h2, h3 {
 #explanation .image-container.big img {
     max-width: 30em;
     max-height: 30em;
+}
+
+#explanation p,
+#explanation h1,
+#explanation h2,
+#explanation h3 {
+    margin: 1em 0;
+}
+
+#explanation ul,
+#explanation ol {
+    margin: 0.5em 0 1em 3em;
 }

@@ -151,7 +151,7 @@ class VennDiagramApp {
     applyColorScheme(colorScheme) {
         document.querySelector("body")
             .style.backgroundColor = colorScheme.background;
-        for (let selector of ["#diagram-name", "#previous-diagram", "#next-diagram"]) {
+        for (let selector of ["#header"]) {
             document.querySelector(selector)
                 .style.color = colorScheme.foreground;
         }
