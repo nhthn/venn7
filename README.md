@@ -1,10 +1,14 @@
 Venn 7
 ======
 
+**Try it out here: https://nathan.ho.name/venn7/**
+
 This project consists of:
 
 - a tool for generating attractively rendered symmetric 7-Venn diagrams
 - a web app where said symmetric 7-Venn diagrams are identified with 7-note scales and used as an interface for playing chords.
+
+Information on what symmetric 7-Venn diagrams are can be found in the app itself.
 
 Running the web app
 -------------------
@@ -25,38 +29,12 @@ Sorry, the Python side of this repo is a bit of a mess. To set up:
 
 To recompile Venn diagram shape data, run `python src/venn7/venn.py app/venn_diagrams.js`.
 
-Venn diagrams
--------------
-
-You're certainly familiar with the well-known Venn diagrams with two and three sets. With four or more sets, the space of Venn diagrams is rich and full of surprising properties. For example, a valid 4-Venn diagram can't be constructed using circles (we have to resort to ellipses), and neither can a 4-Venn diagram possess four-fold rotational symmetry.
-
-A theorem of Henderson states that a n-Venn diagram with n-fold rotational symmetry can only exist when n is prime. The search for symmetric n-Venn diagrams for n > 3 is an active research topic in the field of combinatorics.
-
-There is only one symmetric 5-Venn diagram, which can be rendered with five ellipses. Symmetric 7-Venn diagrams were a mystery for some years, but eventually one was found by Grunbaum. As more were discovered, some constraints on the search were defined:
-
-- **Simple:** no intersections of three or more curves.
-- **Monotonicity:** the Venn diagram can theoretically be rendered with convex curves (even if it isn't in practice). This implies that the different regions are sorted into concentric layers by the number of curves that they are part of.
-- **Polar symmetry:** the Venn diagram is topologically unchanged when turned inside out.
-
-There are exactly six "golden 7-Venn diagrams" satisfying all three: Adelaide, Hamilton, Manawatu, Massey, Palmerston North, and Victoria. If we relax the polar symmetry condition, there are an additional 16 "silver 7-Venn diagrams," for a total of 23 simple monotone symmetric 7-Venn diagrams.
-
-The 11-Venn case is even richer than the 7-Venn case. A few non-simple diagrams were found in the 2000's, but Mamakani and Ruskey made a breakthrough in 2012, discovering over 200,000 simple symmetric monotone 11-Venn diagrams as well as 13-Venn cases. As beautiful as these diagrams are, I don't see an obvious way to make them into a user interface, as there are thousands of extremely small regions.
-
-Pandiatonicism
---------------
-
-Pandiatonicism is a broad variety of musical practices that use the diatonic scale in ways "beyond" tonal harmony. A common pandiatonic technique is to treat the seven tones as roughly uniform,just as dodecaphony views the 12-tone chromatic scale. This idea is realized in pitch class set theory mod 7 (Santa, 2000), which adapts classical 12-tone set theory to pandiatonic music by thinking of diatonic chords as subsets of the scale.
-
-My friend Nathan Turczan originally inspired this project by pointing out that the curves of a 7-fold Venn diagram can be mapped to a diatonic scale, making the Venn diagram into a playable visualization of set theory mod 7. I loved the idea, and it stuck with me for a good two years until I finally caved and built it. Just as we anticipated, the resulting interface is as awkward and strange as it is fascinating.
-
-I noticed early on that, when playing standard synthesizer tones on the diagram, there is a discontinuity as the scale wraps back to the octave. For example, there are seven regions on a diagram representing diatonic seconds, but one of those has to be a seventh, breaking the symmetry. To address this, I decided to use Shepard tones, an auditory illusion where a note has ambiguous octavation. This closes the seam formed by the octave and makes the tones reflect the symmetry of the diagram.
-
 Implementation details
 ----------------------
 
 The Bezier curve data is generated offline using Python + NumPy, and a bit of SymPy and Shapely. Paper.js's functions are used to compute Boolean operations on Bezier curves. The resulting data is wrapped up into a single JSON file and loaded into the web app. The sound design is rendered from synthesizer patches made in SuperCollider.
 
-All Venn diagrams are created parametrically and algorithmically with no use of a GUI, so their parameters can be adjusted. In the following sections, I'll cover technical details and challenges of each component: 
+All Venn diagrams are created parametrically and algorithmically with no use of a GUI, so their parameters can be adjusted. In the following sections, I'll cover technical details and challenges of each component:
 
 - Entry of Venn diagrams with a matrix encoding.
 - Combinatorial validation of diagram.
@@ -72,17 +50,17 @@ The curves of a monotone *n*-Venn diagram can be characterized as *n* parallel, 
 
 ```
 -----   ---------------------------------
-      X                                 
+      X
 -   -   -   -------------   -------------
-  X       X               X             
+  X       X               X
 -   -   -   -   -----   -   -   -----   -
-      X       X       X       X       X 
+      X       X       X       X       X
 -   -   -   -   -   -   -   -   -   -   -
-  X       X       X       X       X     
+  X       X       X       X       X
 -   -----   -   -   -   -   -----   -   -
-              X       X               X 
+              X       X               X
 -------------   -   -   -------------   -
-                  X                     
+                  X
 -----------------   ---------------------
 ```
 
@@ -93,24 +71,11 @@ Adelaide, like all the diagrams we work with in this project, is 7-fold rotation
 1010001000
 0101010101
 1010101010
-0001010010
+0001010001
 0000100000
 ```
 
 We could call this a "compact matrix encoding." This is a generalization of the "matrix encoding" described in a paper by Cao et al. The distinction is that we allow multiple 1's in each column, whereas the matrix encoding places each 1 in its own column, producing a much more horizontally spaced-out figure. The matrix vs. compact matrix encodings are topologically identical, but the compact matrix encoding lends itself better to conversion to an attractive geometrical figure, so we prefer it for this application.
-
-Noting that the odd-numbered entries in odd-numbered rows and even-numbered entries in even-numbered rows are all 0's (i.e. the 1's fall in a checkerboard), every other entry can be removed from each row:
-
-```
-10000
-11010
-11111
-11111
-01101
-00100
-```
-
-I call this the "mini-matrix encoding." It is employed from the above-linked Ruskey and Weston page, and the format used to enter Venn diagrams into the project. Readding the zeros expands them to compact matrix encodings.
 
 ### Combinatorial validation
 
@@ -151,35 +116,11 @@ Some comments on individual patches:
 
 ### Web app
 
-The app is plain old vanilla JavaScript runnable in a local filesystem, and the sole dependencies are SVG.js and Tone.js (both of which I have vendored).
-
-Conclusions
------------
-
-Thanks for checking out this project! I loved working on it since it combines a few of my favorite topics: sound design, music theory, research mathematics, and musical interface design.
-
-Since the data generation is decoupled from the app, I would love to see what other things you can do with it. Some fun ideas:
-
-- virtual MIDI keyboard as a VST plugin
-- posters
-- string or wire art (all Venn diagrams are representable as woven strings)
-- physical instrument with buttons
-- dartboard
-- Twister mat
-- 7-day weekly planner
-- eccentric billionaire mansion floor plan
-
-Acknowledgements
-----------------
-
-Thanks to Nathan Turczan for first coming up with this idea, and Luke Nihlen for early feedback. Dedicated in memory of Eddie Gale.
+The app is plain old vanilla JavaScript, almost runnable in a local filesystem save for Tone.js sample loading. The sole dependencies are SVG.js and Tone.js (both of which I have vendored).
 
 References
 ----------
 
 - Cao, Tao et al. "Symmetric Monotone Venn Diagrams with Seven Curves."
-- Grunbaum, Branko. "The search for symmetric Venn diagrams."
 - Ruskey, Frank and Weston, Mark. "A Survey of Venn Diagrams." https://www.combinatorics.org/files/Surveys/ds5/VennSymmExamples.html
 - Hobby, John D. "Smooth, Easy to Compute Interpolating Splines."
-- Santa, Matthew. "Analysing Post-Tonal Diatonic Music: A Modulo 7 Perspective." https://www.jstor.org/stable/854427?seq=1
-- Ahmadi Mamakani, Abdolkhalegh. "Searching for Simple Symmetric Venn Diagrams." https://dspace.library.uvic.ca:8443/handle/1828/4709
