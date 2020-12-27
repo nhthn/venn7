@@ -441,7 +441,7 @@ DIAGRAMS = {
         1010
         0001
         """,
-        "Symmetrical 5-Venn diagram",
+        "Symmetric 5-Venn diagram",
         renderer_args={
             "inner_radius": 10,
             "spacing": 8,
