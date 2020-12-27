@@ -346,3 +346,10 @@ class VennPlayer {
 }
 
 const app = new VennDiagramApp(venn_diagrams);
+
+document.getElementById("help").addEventListener("click", () => {
+    document.getElementById("explanation").style.display = "flex";
+});
+document.getElementById("explanation-background").addEventListener("click", () => {
+    document.getElementById("explanation").style.display = "none";
+});

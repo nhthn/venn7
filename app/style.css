@@ -40,3 +40,45 @@ body {
     font-weight: normal;
     text-align: center;
 }
+
+p {
+    margin: 1em 0;
+}
+
+ul, ol {
+    margin-left: 3em;
+}
+
+#explanation {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    padding: 1em;
+    /* display: flex; */
+    display: none;
+}
+
+#explanation-background {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5);
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+}
+
+#explanation-inner {
+    box-shadow: 0em 0.5em 0.5em rgba(0, 0, 0, 0.5);
+    max-width: 60em;
+    margin: 1em auto;
+    padding: 2em;
+    box-sizing: border-box;
+    overflow-y: scroll;
+    z-index: 100;
+
+    background-color: #eeeeee;
+    color: #111;
+}
