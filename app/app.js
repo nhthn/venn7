@@ -138,7 +138,7 @@ class VennDiagramApp {
 
     loadDiagram() {
         if (this.diagram !== null) {
-            this.diagram.cleanup();
+            this.diagram.cleanUp();
         }
         const name = this.vennDiagrams.diagrams_list[this.diagramIndex];
         const diagram = this.vennDiagrams[name];
@@ -185,6 +185,7 @@ class VennDiagram {
         this.scale = scale;
 
         this.player = new VennPlayer(this.n, `sounds/${colorScheme.sound}`);
+        this.player.load();
 
         function updateSize() {
             const size = Math.min(
@@ -278,12 +279,11 @@ class VennDiagram {
     }
 
     clickRegion(regionIndex) {
-        console.log("lick");
         const sets = get_venn_sets(regionIndex, this.n);
         this.player.playChord(sets);
     }
 
-    cleanup() {
+    cleanUp() {
         this.draw.clear();
         const node = this.draw.node;
         node.parentElement.removeChild(node);
@@ -294,6 +294,20 @@ class VennDiagram {
     }
 }
 
+async function loadAudioBuffers(audioContext, files) {
+    const result = [];
+    for (let file of files) {
+        let response = await fetch(file);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch ${file}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        result.push(audioBuffer);
+    }
+    return result;
+}
+
 class VennPlayer {
     constructor(n, directory) {
         this.directory = directory;
@@ -301,23 +315,37 @@ class VennPlayer {
 
         this.scale = n === 5 ? [0, 3, 5, 7, 10] : [0, 2, 3, 5, 7, 8, 10];
 
+        this.files = [];
+        for (let i = 0; i < this.n; i++) {
+            this.files.push(`${directory}/note_${this.scale[i]}.mp3`);
+        }
+
         this.polyphony = 3;
         this.synths = [];
+
+        this.state = "not loading";
+    }
+
+    async load() {
+        this.state = "loading";
+        const buffers = await loadAudioBuffers(Tone.context, this.files);
         for (let i = 0; i < this.n; i++) {
             let note = [];
             this.synths.push(note);
             for (let j = 0; j < this.polyphony; j++) {
-                const synth = new Tone.Player(
-                    `${directory}/note_${this.scale[i]}.mp3`
-                ).toDestination();
+                const synth = new Tone.Player(buffers[i]).toDestination();
                 synth.fadeOut = 1;
                 synth.volume.value = -10;
                 note.push(synth);
             }
         }
+        this.state = "ready";
     }
 
     stopAllSynths() {
+        if (this.state !== "ready") {
+            return;
+        }
         for (let note of this.synths) {
             for (let synth of note) {
                 synth.stop();
@@ -326,6 +354,9 @@ class VennPlayer {
     }
 
     playChord(chord) {
+        if (this.state !== "ready") {
+            return;
+        }
         this.stopAllSynths();
         for (let i = 0; i < this.n; i++) {
             if (chord[i]) {
@@ -337,6 +368,9 @@ class VennPlayer {
     }
 
     cleanUp() {
+        if (this.state !== "ready") {
+            return;
+        }
         for (let note of this.synths) {
             for (let synth of note) {
                 synth.dispose();
