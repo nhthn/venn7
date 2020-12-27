@@ -7,13 +7,15 @@
     </head>
     <body>
         <div id="container">
-            <div id="header">
-                <button class="navigator"></button>
-                <button class="navigator" id="previous-diagram">◀</button>
-                <h1 id="diagram-name"></h1>
-                <button class="navigator" id="next-diagram">▶</button>
-                <button class="navigator" id="help">?</button>
-            </div>
+            <nav id="header">
+                <button></button>
+                <nav id="diagram-and-arrows">
+                    <button id="previous-diagram">◀</button>
+                    <h1 id="diagram-name"></h1>
+                    <button id="next-diagram">▶</button>
+                </nav>
+                <button id="help">?</button>
+            </nav>
             <div id="canvas-container"></div>
         </div>
         <article id="explanation">
@@ -52,14 +54,14 @@
 
                 <p>But unlike the 2-Venn and 3-Venn diagrams, it requires ellipses rather than circles, and doesn't have fourfold rotational symmetry like we would expect. In fact, no 4-Venn diagram exists using only circles, and no 4-Venn diagram can be fourfold rotational symmetric.</p>
 
-                <p>As we can gather, Venn diagrams of order 4 or more don't generalize easily from the 2-Venn and 3-Venn diagrams. In fact, it isn't obvious whether Venn diagrams even exist at all for <em>n</em> &gt; 4. The answer to this question was positively resolved by Venn himself, who described an "inductive construction" involving drawing curves around the borders of other curves:</p>
+                <p>As we can gather, Venn diagrams of order 4 or more don't generalize easily from the 2-Venn and 3-Venn diagrams. In fact, it isn't obvious whether Venn diagrams even exist at all for <em>n</em> &gt; 4. The answer to this question was positively resolved by Venn himself, who described an inductive construction involving drawing curves around the borders of other curves:</p>
 
                 <div class="image-container two-images">
                     <img src="images/venn_4_alt.png">
                     <img src="images/venn_5.png">
                 </div>
 
-                <p>This settles the existence question, but these diagrams sure look messy. Moving the goalposts, how can we find a sufficiently "nice-looking" Venn diagram of high order?</p>
+                <p>By continually adding these folded curves, we can show that there are valid Venn diagrams for all <em>n</em> &gt; 4. This settles the existence question, but these diagrams sure look messy. Moving the goalposts, how can we find a sufficiently "nice-looking" Venn diagram of high order?</p>
 
                 <p>A good place to look is symmetric Venn diagrams &mdash; <em>n</em>-Venn diagrams with <em>n</em>-fold rotational symmetry. We've mentioned that no 4-Venn diagram can be symmetric, which follows from Henderson's theorem:</p>
 

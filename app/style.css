@@ -34,18 +34,25 @@ h1, h2, h3 {
     justify-content: space-between;
     align-items: center;
     padding: 1em;
+    font-size: 20pt;
 }
 
-.navigator {
-    font-size: 20pt;
+#header button {
     border: none;
     background: none;
     cursor: pointer;
+    font-size: inherit;
     color: inherit;
+    padding: 0.1em 0.5em;
+}
+
+#diagram-and-arrows {
+    display: flex;
+    justify-content: space-between;
+    min-width: 25em;
 }
 
 #diagram-name {
-    font-size: 20pt;
     font-weight: normal;
     text-align: center;
 }
