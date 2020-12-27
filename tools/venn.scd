@@ -509,14 +509,10 @@ Routine {
 SynthDef(\bell2Synth, {
 	var snd, freq, n;
 	freq = \freq.kr(440);
-	n = (1..16);
-	n = n * (n * n * 3e-3 + 1).sqrt;
-	snd = DynKlank.ar(`[
-		n,
-		(n * -3).dbamp,
-		n.reciprocal.squared * 30
-	], Impulse.ar(0), freq);
-	snd = Splay.ar(snd, 0.5);
+	snd = Saw.ar(freq * (SinOsc.ar(4) * Line.kr(0, 1, 1) * 0.25).midiratio);
+	snd = MoogFF.ar(snd, Env.perc(Rand(0.1, 0.9), Rand(3.0, 4.0)).ar.linexp(0, 1, 1, 8) * freq, 3.5);
+	snd = (snd * 5.dbamp).tanh * 10.dbamp;
+	snd = snd ! 2;
 	snd = snd * Env.perc(0.01, 5.0).ar(Done.freeSelf);
 	snd = snd * \amp.kr(0.4);
 	Out.ar(\out.kr(0), snd);
