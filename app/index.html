@@ -27,38 +27,41 @@
 
                 <h2>Venn diagrams</h2>
 
-                <p>You may be familiar with the following Venn diagrams, which visualize all possible intersections of two and three sets:</p>
+                <p>You may be familiar with the following Venn diagrams, which visualize all possible Boolean operations of two and three sets:</p>
 
-                [image]
+                <div class="image-container two-images">
+                    <img src="images/venn_2.png">
+                    <img src="images/venn_3.png">
+                </div>
 
-                <p>To introduce some clear terminology, the boundary of each set is referred to as a "curve," and the shapes formed by interesctions and differences of curves are the "regions." The 2-Venn diagram has three regions and the 3-Venn diagram seven regions. In general, an <em>n</em>-Venn diagram has exactly 2<sup><em>n</em></sup> - 1 regions. Finally, we'll define the "order" of a region as the number of curves it is contained in.</p>
+                <p>To introduce some clear terminology, the boundary of each set is referred to as a "curve," and the shapes formed by intersections and differences of curves are the "regions." The 2-Venn diagram has three regions and the 3-Venn diagram seven regions. In general, an <em>n</em>-Venn diagram has exactly 2<sup><em>n</em></sup> - 1 regions. Finally, we'll define the "order" of a region as the number of curves it is contained in.</p>
 
                 <p>What about a 4-Venn diagram? Our first attempt might look like this:</p>
 
-                [image]
+                <div class="image-container">
+                    <img src="images/venn_4_naive.png">
+                </div>
 
-                <p>On closer inspection, this diagram is incorrect. There are only 13 regions compared to an expected 15. The two missing regions are of order 2, those that would be formed by the intersection of the two diagonally opposite curves. We can repair this diagram by adding appendages to two of the curves:</p>
+                <p>On closer inspection, this diagram is incorrect. There are only 13 regions compared to an expected 15. The two missing regions are of order 2, those that would be formed by the intersection of the two diagonally opposite curves. In this case, there is no region contained by x and w but not y and z, and no region contained by y and z but not x and w.</p>
 
-                [image]
+                <p>A correct Venn diagram with all 15 regions looks like this (<em>Keep Talking</em> players may recognize this one):</p>
 
-                <p>This is topologically correct, but it's uglier than the 2-Venn and 3-Venn diagrams. We pose two questions:</p>
+                <div class="image-container">
+                    <img src="images/venn_4.png">
+                </div>
 
-                <ol>
-                    <li>Can a 4-Venn diagram be created using circles?</li>
-                    <li>Can a 4-Venn diagram possess fourfold rotational symmetry?</li>
-                </ol>
+                <p>But unlike the 2-Venn and 3-Venn diagrams, it requires ellipses rather than circles, and doesn't have fourfold rotational symmetry like we would expect. In fact, no 4-Venn diagram exists using only circles, and no 4-Venn diagram can be fourfold rotational symmetric.</p>
 
-                <p>Interestingly, the answer to both these question is "no." Although it satisfies neither of the above properties, there is a nice-looking 4-Venn diagram built using four congruent ellipses and possessing reflectional symmetry (<em>Keep Talking</em> players may recognize this one):</p>
+                <p>As we can gather, Venn diagrams of order 4 or more don't generalize easily from the 2-Venn and 3-Venn diagrams. In fact, we might wonder if Venn diagrams even exist at all for <em>n</em> &gt; 4. The answer to this question was positively resolved by Venn himself, who introduced a construction involving drawing curves around the borders of other curves:</p>
 
-                [image]
+                <div class="image-container two-images">
+                    <img src="images/venn_4_alt.png">
+                    <img src="images/venn_5.png">
+                </div>
 
-                <p>As we can gather, Venn diagrams of order 4 or more don't generalize easily from the 2-Venn and 3-Venn diagrams. In fact, we might wonder if Venn diagrams even exist at all for <em>n</em> &gt; 4. The answer to this question was positively resolved by Venn himself, who introduced a construction involving drawing curves around the borders of other curves. It's visually messy, but shows that Venn diagrams exist for all orders:</p>
+                <p>This settles the existence question, but these diagrams sure look messy. Moving the goalposts, how can we find a sufficiently "nice-looking" Venn diagram of high order?</p>
 
-                [image]
-
-                <p>These are not the only higher-order Venn diagrams, and the space of higher-order Venn diagrams is rich, and has fascinated the field of combinatorics for decades.</p>
-
-                <p>One of the most studied topics is symmetric Venn diagrams -- <em>n</em>-Venn diagrams with <em>n</em>-fold rotational symemtry. We've mentioned that no 4-Venn diagram can be symmetric, which follows from Henderson's theorem:</p>
+                <p>A good place to look is symmetric Venn diagrams -- <em>n</em>-Venn diagrams with <em>n</em>-fold rotational symmetry. We've mentioned that no 4-Venn diagram can be symmetric, which follows from Henderson's theorem:</p>
 
                 <blockquote>
                     <strong>Henderson's theorem:</strong> if a symmetric <em>n</em>-Venn diagram exists, then <em>n</em> must be prime.
