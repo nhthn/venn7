@@ -72,7 +72,7 @@ const COLOR_SCHEMES = {
         background: [210, 20, 90],
         center: [280, 20, 30],
         foreground: [190, 20, 40],
-        sound: "pad",
+        sound: "droplet",
         order: 7
     }),
     // orange/red/purple
@@ -80,7 +80,7 @@ const COLOR_SCHEMES = {
         background: [0, 30, 10],
         center: [30, 90, 70],
         foreground: [10, 20, 95],
-        sound: "pad",
+        sound: "piano",
         order: 7
     }),
     // orange/red/purple
@@ -89,7 +89,7 @@ const COLOR_SCHEMES = {
         center: [30, 30, 30],
         foreground: [10, 20, 10],
         longHue: true,
-        sound: "pad",
+        sound: "bell2",
         order: 5
     })
 };
@@ -298,6 +298,9 @@ class VennPlayer {
     constructor(n, directory) {
         this.directory = directory;
         this.n = n;
+
+        this.scale = n === 5 ? [0, 3, 5, 7, 10] : [0, 2, 3, 5, 7, 8, 10];
+
         this.polyphony = 3;
         this.synths = [];
         for (let i = 0; i < this.n; i++) {
@@ -305,7 +308,7 @@ class VennPlayer {
             this.synths.push(note);
             for (let j = 0; j < this.polyphony; j++) {
                 const synth = new Tone.Player(
-                    `${directory}/note_${[0, 2, 3, 5, 7, 8, 10][i]}.mp3`
+                    `${directory}/note_${this.scale[i]}.mp3`
                 ).toDestination();
                 synth.fadeOut = 1;
                 synth.volume.value = -10;
