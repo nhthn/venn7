@@ -1,10 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@700&family=Vollkorn&display=swap');
+
 * {
     margin: 0;
     padding: 0;
 }
 
+p {
+    margin: 1em 0;
+}
+
+ul, ol {
+    margin-left: 3em;
+}
+
 body {
     overflow: hidden;
+    font-family: "Vollkorn", serif;
+    font-size: 14pt;
+}
+
+h1, h2, h3 {
+    font-family: "Arima Madurai", serif;
 }
 
 #container {
@@ -41,14 +57,6 @@ body {
     text-align: center;
 }
 
-p {
-    margin: 1em 0;
-}
-
-ul, ol {
-    margin-left: 3em;
-}
-
 #explanation {
     position: absolute;
     left: 0;
@@ -81,4 +89,9 @@ ul, ol {
 
     background-color: #eeeeee;
     color: #111;
+}
+
+#explanation h1 {
+    text-align: center;
+    font-size: 200%;
 }
