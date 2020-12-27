@@ -19,11 +19,11 @@
         <article id="explanation">
             <div id="explanation-background"></div>
             <div id="explanation-inner">
-                <h1>Venn 7 - Exploring Symmetric 7-Venn Diagrams with a Musical Interface</h1>
+                <h1>Venn 7: Exploring Symmetric 7-Venn Diagrams with a Musical Interface</h1>
 
                 <p><em>Venn 7</em> is a Web app for exploring symmetric 7-Venn diagrams by mapping them to musical chords.</p>
 
-                <p>Click on regions in the diagrams to play chords, and use the arrows to navigate between the six 7-Venn diagram and one 5-Venn diagram.</p>
+                <p>Click on regions in the diagrams to play chords, and use the arrows to navigate between the six 7-Venn diagram and one 5-Venn diagram. Read on for an explanation of what's going on here.</p>
 
                 <h2>Venn diagrams</h2>
 
@@ -44,15 +44,15 @@
 
                 <p>On closer inspection, this diagram is incorrect. There are only 13 regions compared to an expected 15. The two missing regions are of order 2, those that would be formed by the intersection of the two diagonally opposite curves. In this case, there is no region contained by x and w but not y and z, and no region contained by y and z but not x and w.</p>
 
-                <p>A correct Venn diagram with all 15 regions looks like this (<em>Keep Talking</em> players may recognize this one):</p>
+                <p>A correct Venn diagram with all 15 regions looks like this (<a href="https://keeptalkinggame.com/"><em>Keep Talking</em></a> players may recognize this one):</p>
 
-                <div class="image-container">
+                <div class="image-container medium">
                     <img src="images/venn_4.png">
                 </div>
 
                 <p>But unlike the 2-Venn and 3-Venn diagrams, it requires ellipses rather than circles, and doesn't have fourfold rotational symmetry like we would expect. In fact, no 4-Venn diagram exists using only circles, and no 4-Venn diagram can be fourfold rotational symmetric.</p>
 
-                <p>As we can gather, Venn diagrams of order 4 or more don't generalize easily from the 2-Venn and 3-Venn diagrams. In fact, we might wonder if Venn diagrams even exist at all for <em>n</em> &gt; 4. The answer to this question was positively resolved by Venn himself, who introduced a construction involving drawing curves around the borders of other curves:</p>
+                <p>As we can gather, Venn diagrams of order 4 or more don't generalize easily from the 2-Venn and 3-Venn diagrams. In fact, it isn't obvious whether Venn diagrams even exist at all for <em>n</em> &gt; 4. The answer to this question was positively resolved by Venn himself, who described an "inductive construction" involving drawing curves around the borders of other curves:</p>
 
                 <div class="image-container two-images">
                     <img src="images/venn_4_alt.png">
@@ -61,39 +61,44 @@
 
                 <p>This settles the existence question, but these diagrams sure look messy. Moving the goalposts, how can we find a sufficiently "nice-looking" Venn diagram of high order?</p>
 
-                <p>A good place to look is symmetric Venn diagrams -- <em>n</em>-Venn diagrams with <em>n</em>-fold rotational symmetry. We've mentioned that no 4-Venn diagram can be symmetric, which follows from Henderson's theorem:</p>
+                <p>A good place to look is symmetric Venn diagrams &mdash; <em>n</em>-Venn diagrams with <em>n</em>-fold rotational symmetry. We've mentioned that no 4-Venn diagram can be symmetric, which follows from Henderson's theorem:</p>
 
                 <blockquote>
                     <strong>Henderson's theorem:</strong> if a symmetric <em>n</em>-Venn diagram exists, then <em>n</em> must be prime.
                 </blockquote>
 
-                <p>That brings us to <em>n</em> = 5, which is prime. Grunbaum found the only symmetric 5-Venn diagram in [year].</p>
+                <p>That brings us to <em>n</em> = 5, which is prime. There are a handful of 5-Venn diagrams, but there is only one that is <em>simple</em> &mdash; that is, no three curves intersect at one point. Grunbaum found the only simple symmetric 5-Venn diagram in 1975, a pretty figure that can be rendered using five congruent ellipses:</p>
 
-                [image]
+                <div class="image-container medium">
+                    <img src="images/grunbaum_5.png">
+                </div>
 
-                <p>The case <em>n</em> = 7 was mysterious. Grunbaum again found the first known example.</p>
+                <p>(This figure is included in the web app, but we use peanut-shaped regions for visual evenness.)</p>
 
-                [image]
+                <p>Fast-forward to 1992, and Grunbaum publishes a paper containing this stunning figure &mdash; the first simple symmetric 7-Venn diagram:</p>
 
-                <p>As more 7-Venn diagrams were found, some special constraints were established to narrow the search:</p>
+                <div class="image-container big">
+                    <img src="images/grunbaum_7.png">
+                </div>
+
+                <p>As more simple symmetric 7-Venn diagrams were found, two additional special constraints were established to narrow the search:</p>
 
                 <ol>
-                    <li><strong>Simple:</strong> No three curves can intersect at one point.</li>
-                    <li><strong>Monotone:</strong> The regions sort themselves into concentric layers by order. Formally, each region of order 1 &lt; k &lt; n is bordered by regions of order k + 1 and k - 1. (The above diagram is not monotone, reader exercise to see why.)</li>
+                    <li><strong>Monotone:</strong> The regions sort themselves into concentric layers by order. Formally, each region of order 1 &lt; <em>k</em> &lt; <em>n</em> is bordered by regions of order <em>k</em> + 1 and <em>k</em> - 1. (The above diagram is not monotone. The reason is left as a reader exercise.)</li>
                     <li><strong>Polar symmetric:</strong> The Venn diagram is topologically identical if turned inside out.</li>
                 </ol>
 
-                <p>It was shown that there are exactly six "golden 7-Venn diagrams" that satisfy all three of these properties, named Adelaide, Victoria, Massey, Manawatu, Palmerston North, and Hamilton.</p>
+                <p>It was shown that there are exactly six "golden 7-Venn diagrams" that satisfy all three of these properties, named Adelaide, Victoria, Massey, Manawatu, Palmerston North, and Hamilton. If the polar symmetric condition is relaxed, there are an additional 16 "silver 7-Venn diagrams."</p>
 
                 <p>If you are curious about the <em>n</em> = 11 case, Mamakani and Ruskey discovered the first golden 11-Venn diagram, along with over 200,000 more. Unfortunately, these diagrams are less tenable as interactive Web apps, since most of the 2,047 regions are very small.</p>
 
                 <h2>About the app</h2>
 
-                <p>Pandiatonicism is a broad variety of musical practices that use the diatonic scale in ways "beyond" tonal harmony. A common pandiatonic technique is to treat the seven tones as roughly uniform,just as dodecaphony views the 12-tone chromatic scale. This idea is realized in pitch class set theory mod 7 (Santa, 2000), which adapts classical 12-tone set theory to pandiatonic music by thinking of diatonic chords as subsets of the scale.</p>
+                <p><a href="https://en.wikipedia.org/wiki/Pandiatonicism">Pandiatonicism</a> is a broad variety of musical practices that use the diatonic scale in ways "beyond" tonal harmony. A common pandiatonic technique is to treat the seven tones as roughly uniform,just as dodecaphony views the 12-tone chromatic scale. This idea is realized in pitch class set theory mod 7 (Santa, 2000), which adapts classical 12-tone set theory to pandiatonic music by thinking of diatonic chords as subsets of the scale.</p>
 
                 <p>My friend Nathan Turczan originally inspired this project by pointing out that the curves of a 7-fold Venn diagram can be mapped to a diatonic scale, making the Venn diagram into a playable visualization of set theory mod 7. I loved the idea, and it stuck with me for a good two years until I finally caved and built it. Just as we anticipated, the resulting interface is as awkward and strange as it is fascinating. It is definitely not meant to be a serious contender for a viable musical interface, but more of a net art project on its own.</p>
 
-                <p>I noticed early on that, when playing standard synthesizer tones on the diagram, there is a discontinuity as the scale wraps back to the octave. For example, there are seven regions on a diagram representing diatonic seconds, but one of those has to be a seventh, breaking the symmetry. To address this, I decided to use Shepard tones, an auditory illusion where a note has ambiguous octavation. This closes the seam formed by the octave and makes the tones reflect the symmetry of the diagram. (Shepard tones are not to be confused with Shepard-Risset tones, which is the same auditory illusion but with continuously ascending pitch.)</p>
+                <p>I noticed early on that standard synthesizer tones on the diagram produced a discontinuity as the scale wraps back to the octave. For example, there are seven regions on a diagram representing diatonic seconds, but one of those has to be a seventh, breaking the symmetry. To address this, I decided to use <a href="https://en.wikipedia.org/wiki/Shepard_tone">Shepard tones</a>, an auditory illusion where a note has ambiguous octavation. This closes the seam formed by the octave and makes the tones reflect the symmetry of the diagram.</p>
 
                 <h2>References</h2>
 
@@ -101,6 +106,8 @@
                     <li>Venn, John. <em>Symbolic Logic</em>. https://archive.org/details/symboliclogic00venngoog</li>
                     <li>Venn, John. "On the diagrammatic and mechanical representation of propositions and reasonings." <em>Philosophical Magazine.</em></li>
                     <li>Cao, Tao et al. "Symmetric Monotone Venn Diagrams with Seven Curves."</li>
+                    <li>Grunbaum, Branko. 1975. "<a href="https://www.jstor.org/stable/2689288">Venn Diagrams and Independent Families of Sets</a>."</li>
+                    <li>Grunbaum, Branko. 1992. "Venn Diagrams II." <em>Geombinatorics.</em> Issue II, Vol. 2. (The PDF is hard to find, but it's out there &mdash; let me know if you want a copy.)</li>
                     <li>Grunbaum, Branko. "The search for symmetric Venn diagrams."</li>
                     <li>Ruskey, Frank and Weston, Mark. "A Survey of Venn Diagrams." https://www.combinatorics.org/files/Surveys/ds5/VennSymmExamples.html</li>
                     <li>Hobby, John D. "Smooth, Easy to Compute Interpolating Splines."</li>

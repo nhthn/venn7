@@ -106,3 +106,13 @@ h1, h2, h3 {
     display: flex;
     justify-content: center;
 }
+
+#explanation .image-container.medium img {
+    max-width: 20em;
+    max-height: 20em;
+}
+
+#explanation .image-container.big img {
+    max-width: 30em;
+    max-height: 30em;
+}
