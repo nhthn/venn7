@@ -111,6 +111,8 @@ class VennDiagramApp {
         this.numberOfDiagrams = this.vennDiagrams.diagrams_list.length;
         this.diagram = null;
         this.diagramIndex = 0;
+        this.bufferLoader = new BufferLoader();
+
         this.loadDiagram();
 
         window.addEventListener("keydown", (event) => {
@@ -145,7 +147,7 @@ class VennDiagramApp {
         document.querySelector("#diagram-name").innerText = diagram.name;
         const colorScheme = COLOR_SCHEMES[name] || COLOR_SCHEMES.default;
         this.applyColorScheme(colorScheme);
-        this.diagram = new VennDiagram(diagram, colorScheme);
+        this.diagram = new VennDiagram(diagram, colorScheme, this.bufferLoader);
     }
 
     applyColorScheme(colorScheme) {
@@ -172,10 +174,11 @@ function get_venn_sets(region_index, n) {
 
 
 class VennDiagram {
-    constructor(venn_diagram, colorScheme) {
+    constructor(venn_diagram, colorScheme, bufferLoader) {
         this.venn_diagram = venn_diagram;
         this.n = venn_diagram.n;
         this.colorScheme = colorScheme;
+        this.bufferLoader = bufferLoader;
 
         const canvas_size = 800;
         this.canvas_size = canvas_size;
@@ -184,7 +187,9 @@ class VennDiagram {
         const scale = 350 / 50;
         this.scale = scale;
 
-        this.player = new VennPlayer(this.n, `sounds/${colorScheme.sound}`);
+        this.player = new VennPlayer(
+            this.n, `sounds/${colorScheme.sound}`, this.bufferLoader
+        );
         this.player.load();
 
         function updateSize() {
@@ -294,24 +299,27 @@ class VennDiagram {
     }
 }
 
-async function loadAudioBuffers(audioContext, files) {
-    const result = [];
-    for (let file of files) {
-        let response = await fetch(file);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch ${file}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        result.push(audioBuffer);
+class BufferLoader {
+    constructor() {
+        this.buffers = {};
     }
-    return result;
+
+    async loadAudioBuffers(audioContext, files) {
+        for (let file of files) {
+            if (this.buffers[file]) {
+                continue;
+            }
+            const audioBuffer = await new Tone.Buffer().load(file);
+            this.buffers[file] = audioBuffer;
+        }
+    }
 }
 
 class VennPlayer {
-    constructor(n, directory) {
+    constructor(n, directory, bufferLoader) {
         this.directory = directory;
         this.n = n;
+        this.bufferLoader = bufferLoader;
 
         this.scale = n === 5 ? [0, 3, 5, 7, 10] : [0, 2, 3, 5, 7, 8, 10];
 
@@ -328,12 +336,14 @@ class VennPlayer {
 
     async load() {
         this.state = "loading";
-        const buffers = await loadAudioBuffers(Tone.context, this.files);
+        const buffers = await this.bufferLoader.loadAudioBuffers(Tone.context, this.files);
         for (let i = 0; i < this.n; i++) {
             let note = [];
             this.synths.push(note);
             for (let j = 0; j < this.polyphony; j++) {
-                const synth = new Tone.Player(buffers[i]).toDestination();
+                const synth = new Tone.Player(
+                    this.bufferLoader.buffers[this.files[i]]
+                ).toDestination();
                 synth.fadeOut = 1;
                 synth.volume.value = -10;
                 note.push(synth);
