@@ -388,3 +388,25 @@ class MetafontSpline(BezierPath):
             beziers.append(bezier)
 
         super().__init__(beziers)
+
+
+class AngleSpline(BezierPath):
+    def __init__(self, points, angles):
+        self.points = np.array(points)
+        n = self.number_of_points = self.points.shape[0]
+
+        beziers = []
+        for i in range(n):
+            point_1 = self.points[i]
+            point_2 = self.points[(i + 1) % n]
+            bezier = MetafontBezier(
+                point_1[0],
+                point_1[1],
+                point_2[0],
+                point_2[1],
+                angles[i],
+                angles[(i + 1) % n],
+            )
+            beziers.append(bezier)
+
+        super().__init__(beziers)

@@ -10,9 +10,6 @@ import shapely.geometry
 import shapely.affinity
 
 import venn7.bezier
-from venn7.bezier import MetafontBezier
-from venn7.bezier import MetafontSpline
-from venn7.bezier import BezierPath
 
 ROOT = pathlib.Path(os.path.realpath(__file__)).parent
 
@@ -184,7 +181,6 @@ class VennDiagram:
             path = venn7.bezier.BezierPath.from_svg_path(region)
             path = path.remove_tiny_segments(threshold=1)
             processed_regions.append(path.as_svg_path())
-
         result["regions"] = processed_regions
 
         return result
@@ -281,9 +277,7 @@ class VennDiagramRenderer:
                     raise RuntimeError
                 vertical_radius = arc_direction * radius * 0.5
                 ratio = 0.6
-                result.append((r1 + vertical_radius * ratio, column - radius * ratio, type_))
                 result.append((r1 + vertical_radius, column, type_))
-                result.append((r1 + vertical_radius * ratio, column + radius * ratio, type_))
         return result
 
     def _get_tensions(self, points):
@@ -326,6 +320,22 @@ class VennDiagramRenderer:
             venn7.bezier.get_rotation_matrix(-np.pi * 0.5 - angle) * 50 / scale
         )
 
+    def _get_angles(self, cylinder_points):
+        result = []
+        for row, column, type_ in cylinder_points:
+            tangent_angle = 2 * np.pi * column / (self.n * len(self.row_swaps)) + np.pi / 2
+            angle = tangent_angle
+            dy = self.spacing
+            dx = (self.inner_radius + self.spacing * row) * 2 * np.pi / (self.n * len(self.row_swaps))
+            tilt_angle = np.arctan2(dy, dx)
+            if type_ == "intersection_+":
+                angle -= tilt_angle
+            elif type_ == "intersection_-":
+                angle += tilt_angle
+            angle = angle % (2 * np.pi)
+            result.append(angle)
+        return result
+
     def get_spline(self, index=0):
         """Render a single curve of the Venn diagram to a BezierSpline
         and return the result.
@@ -339,10 +349,12 @@ class VennDiagramRenderer:
         """
         cylinder_points = self._get_curve_points_on_cylinder(index)
         cylinder_points = self._add_arc_points(cylinder_points)
+        angles = self._get_angles(cylinder_points)
         tensions = self._get_tensions(cylinder_points)
 
         control_points = self._convert_cylinder_points_to_polar(cylinder_points)
-        spline = MetafontSpline(control_points, tensions)
+
+        spline = venn7.bezier.AngleSpline(control_points, angles)
 
         spline = self._normalize_rotation_and_scaling(spline)
         spline = spline.translate(np.array([self.fudge_factor, 0]))
