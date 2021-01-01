@@ -211,6 +211,7 @@ class VennDiagramRenderer:
         spacing=5,
         tension_diagonal=1.0,
         tension_default=1.0,
+        extra_outer_spacing=0,
     ):
         self.n = venn_diagram.n
         self.row_swaps = venn_diagram.row_swaps
@@ -220,9 +221,21 @@ class VennDiagramRenderer:
         self.tension_diagonal = tension_diagonal
         self.tension_default = tension_default
 
+        self.extra_outer_spacing = extra_outer_spacing
+
         # Avoid perfectly coincident endpoints, which causes
         # issues for Boolean ops.
         self.fudge_factor = 1e-4
+
+    def _get_radius_of_row(self, row, use_extra_outer_spacing=True):
+        adjusted_row = row
+        if use_extra_outer_spacing:
+            if row <= 1:
+                adjusted_row -= self.extra_outer_spacing
+            if row >= self.n - 1:
+                adjusted_row += self.extra_outer_spacing
+        result = self.inner_radius + self.spacing * adjusted_row
+        return result
 
     def _get_curve_points_on_cylinder(self, index):
         """Get the set of control points (not Bezier but Metafont control
@@ -277,7 +290,7 @@ class VennDiagramRenderer:
                     raise RuntimeError
                 vertical_radius = arc_direction * radius * 0.5
                 ratio = 0.6
-                result.append((r1 + vertical_radius, column, type_))
+                #result.append((r1 + vertical_radius, column, type_))
         return result
 
     def _get_tensions(self, points):
@@ -303,7 +316,7 @@ class VennDiagramRenderer:
     def _convert_cylinder_points_to_polar(self, cylinder_points):
         polar_points = []
         for row, column, __ in cylinder_points:
-            radius = self.inner_radius + self.spacing * row
+            radius = self._get_radius_of_row(row)
             theta = column * 2 * math.pi / (self.n * len(self.row_swaps))
             x = radius * math.cos(theta)
             y = radius * math.sin(theta)
@@ -326,7 +339,7 @@ class VennDiagramRenderer:
             tangent_angle = 2 * np.pi * column / (self.n * len(self.row_swaps)) + np.pi / 2
             angle = tangent_angle
             dy = self.spacing
-            dx = (self.inner_radius + self.spacing * row) * 2 * np.pi / (self.n * len(self.row_swaps))
+            dx = self._get_radius_of_row(row) * 2 * np.pi / (self.n * len(self.row_swaps))
             tilt_angle = np.arctan2(dy, dx)
             if type_ == "intersection_+":
                 angle -= tilt_angle
@@ -350,7 +363,6 @@ class VennDiagramRenderer:
         cylinder_points = self._get_curve_points_on_cylinder(index)
         cylinder_points = self._add_arc_points(cylinder_points)
         angles = self._get_angles(cylinder_points)
-        tensions = self._get_tensions(cylinder_points)
 
         control_points = self._convert_cylinder_points_to_polar(cylinder_points)
 
@@ -420,6 +432,9 @@ DIAGRAMS = {
         01000000000000
         """,
         "Manawatu",
+        renderer_args={
+            "extra_outer_spacing": 2
+        },
     ),
     "palmerston_north": VennDiagram(
         7,
@@ -432,6 +447,9 @@ DIAGRAMS = {
         00000000010000
         """,
         "Palmerston North",
+        renderer_args={
+            "extra_outer_spacing": 1
+        },
     ),
     "hamilton": VennDiagram(
         7,
@@ -444,6 +462,9 @@ DIAGRAMS = {
         0000000001
         """,
         "Hamilton",
+        renderer_args={
+            "extra_outer_spacing": 1
+        },
     ),
     "5": VennDiagram(
         5,
