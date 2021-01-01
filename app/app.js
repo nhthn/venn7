@@ -153,7 +153,7 @@ class VennDiagramApp {
     applyColorScheme(colorScheme) {
         document.querySelector("body")
             .style.backgroundColor = colorScheme.background;
-        for (let selector of ["#header"]) {
+        for (let selector of ["#header", "#loading-text"]) {
             document.querySelector(selector)
                 .style.color = colorScheme.foreground;
         }
@@ -180,47 +180,62 @@ class VennDiagram {
         this.colorScheme = colorScheme;
         this.bufferLoader = bufferLoader;
 
+        this.canvasContainer = document.getElementById("container");
+
+        this.loadStatus = {
+            audio: false,
+            graphics: false,
+        };
+        this.loadingText = document.getElementById("loading-text");
+        this.onUpdateLoadStatus();
+
         const canvas_size = 800;
         this.canvas_size = canvas_size;
-        const draw = SVG().addTo("#canvas-container").size(canvas_size, canvas_size);
-        this.draw = draw;
-        const scale = 350 / 50;
-        this.scale = scale;
+
+        this.draw = SVG().addTo("#canvas-container").size(canvas_size, canvas_size);
+        this.draw.node.classList.add("hidden");
+        this.scale = 350 / 50;
 
         this.player = new VennPlayer(
             this.n, `sounds/${colorScheme.sound}`, this.bufferLoader
         );
-        this.player.load();
-
-        function updateSize() {
-            const size = Math.min(
-                window.innerWidth,
-                window.innerHeight - document.getElementById("header").clientHeight
-            );
-            draw.node.setAttribute("width", size);
-            draw.node.setAttribute("height", size);
-            draw.node.setAttribute("viewBox", `0 0 ${canvas_size} ${canvas_size}`);
-        }
-        updateSize();
-        this.resizeListener = window.addEventListener("resize", function () {
-            updateSize();
+        this.player.load().then(() => {
+            this.loadStatus.audio = true;
+            this.onUpdateLoadStatus();
         });
 
-        function make_venn_curve(i) {
-            const path = draw.path(venn_diagram.curve)
-                .attr({ "pointer-events": "none" })
-                .fill({ color: "black", opacity: 0 })
-                .stroke({ opacity: 0, color: colorScheme.center, width: 1.5 / scale })
-                .rotate(360 / venn_diagram.n * i, 0, 0)
-                .scale(scale, 0, 0)
-                .translate(canvas_size / 2, canvas_size / 2);
-            return path;
-        }
+        this.updateSize();
+        this.resizeListener = window.addEventListener("resize", () => {
+            this.updateSize();
+        });
 
+        setTimeout(() => {
+            this.render();
+            this.loadStatus.graphics = true;
+            this.onUpdateLoadStatus();
+        }, 0);
+    }
+
+    onUpdateLoadStatus() {
+        if (this.loadStatus.graphics) {
+            this.draw.node.classList.remove("hidden");
+        }
+        if (this.loadStatus.audio && this.loadStatus.graphics) {
+            this.loadingText.innerText = "";
+        } else if (this.loadStatus.audio) {
+            this.loadingText.innerText = "Loading graphics...";
+        } else if (this.loadStatus.graphics) {
+            this.loadingText.innerText = "Loading audio...";
+        } else {
+            this.loadingText.innerText = "Loading audio & graphics...";
+        }
+    }
+
+    render() {
         this.curves = [];
         let i;
-        for (i = 0; i < venn_diagram.n; i++) {
-            this.curves.push(make_venn_curve(i));
+        for (i = 0; i < this.venn_diagram.n; i++) {
+            this.curves.push(this.makeVennCurve(i));
         }
 
         this.curves.forEach((curve) => {
@@ -229,10 +244,31 @@ class VennDiagram {
 
         this.regions = [];
         this.region_outlines = [];
-        for (i = 1; i < Math.pow(2, venn_diagram.n); i++) {
+        for (i = 1; i < Math.pow(2, this.venn_diagram.n); i++) {
             this.renderRegion(i);
         }
     }
+
+    updateSize() {
+        const size = Math.min(
+            window.innerWidth,
+            window.innerHeight - document.getElementById("header").clientHeight
+        );
+        this.draw.node.setAttribute("width", size);
+        this.draw.node.setAttribute("height", size);
+        this.draw.node.setAttribute("viewBox", `0 0 ${this.canvas_size} ${this.canvas_size}`);
+    }
+
+    makeVennCurve(i) {
+        return this.draw.path(this.venn_diagram.curve)
+            .attr({ "pointer-events": "none" })
+            .fill({ color: "black", opacity: 0 })
+            .stroke({ opacity: 0, color: this.colorScheme.center, width: 1.5 / this.scale })
+            .rotate(360 / this.venn_diagram.n * i, 0, 0)
+            .scale(this.scale, 0, 0)
+            .translate(this.canvas_size / 2, this.canvas_size / 2);
+    }
+
 
     makeRegionShape(regionIndex) {
         const path = this.draw.path(this.venn_diagram.regions[regionIndex])
@@ -392,8 +428,8 @@ class VennPlayer {
 const app = new VennDiagramApp(venn_diagrams);
 
 document.getElementById("help").addEventListener("click", () => {
-    document.getElementById("explanation").style.display = "flex";
+    document.getElementById("explanation").classList.remove("hidden");
 });
 document.getElementById("explanation-background").addEventListener("click", () => {
-    document.getElementById("explanation").style.display = "none";
+    document.getElementById("explanation").classList.add("hidden");
 });
