@@ -111,8 +111,13 @@ Due to the octaves, Shepard tones seem to require a really huge, orchestral-soun
 
 Some comments on individual patches:
 
-- Pads: standard detuned subtractive synths with super long reverb.
-- Bells: modal/additive synthesis using a stiff string physical model. See my blog post on modal synthesis for info in this.
+- Victoria = bells: modal/additive synthesis using a stiff string physical model. See my blog post on modal synthesis for info in this.
+- Adelaide = pad: detuned subtractive synths with super long reverb.
+- Massey = weird vocal formant synth: subtractive synth with multiple vocal-like resonances.
+- Manawatu = reed organ: pulse waves with small pulse width and some noise in the upper register.
+- Palmerston North = granular: FM grains triggered by random impulses.
+- Hamilton = electric piano: FM synthesis.
+- Symmetric 5-Venn diagram = weird synthesizer: resonant subtractive synth with randomized envelope for every voice.
 
 ### Web app
 
