@@ -209,10 +209,25 @@ class VennDiagram {
             this.updateSize();
         });
 
+        this.midiCallbacks = {}; 
+  
+        this.triggerMidiNoteOn = (midiNote) => {
+          if (this.midiCallbacks[midiNote] !== undefined) {
+            this.midiCallbacks[midiNote].noteOn();
+          }
+        }
+        
+        this.triggerMidiNoteOff = (midiNote) => {
+          if (this.midiCallbacks[midiNote] !== undefined) {
+            this.midiCallbacks[midiNote].noteOff();
+          }
+        }
+
         setTimeout(() => {
             this.render();
             this.loadStatus.graphics = true;
             this.onUpdateLoadStatus();
+            InitMidiListeners(this.triggerMidiNoteOn, this.triggerMidiNoteOff);
         }, 0);
     }
 
@@ -303,14 +318,34 @@ class VennDiagram {
                 width: 3 / this.scale
             });
 
+        const noteOnAnimation = () => {
+            region_outline.stroke({ opacity: 1 });
+            let i;
+            for (i = 0; i < this.n; i++) {
+                this.curves[i].stroke({ opacity: sets[i] * 0.9 });
+            }
+        } 
+
+        const noteOffAnimation = () => {
+            region_outline.stroke({ opacity: 0 });
+            let i;
+            for (i = 0; i < this.n; i++) {
+                this.curves[i].stroke({ opacity: 0 });
+            }
+        }
+        
+        this.midiCallbacks[regionIndex] = {
+            'noteOn': () => {
+                noteOnAnimation();
+                this.clickRegion(regionIndex);
+            },
+            'noteOff': () => {
+                noteOffAnimation();
+            }
+        };
+
         region_outline
-            .mouseover(() => {
-                region_outline.stroke({ opacity: 1 });
-                let i;
-                for (i = 0; i < this.n; i++) {
-                    this.curves[i].stroke({ opacity: sets[i] * 0.9 });
-                }
-            })
+            .mouseover(noteOnAnimation)
             .mouseout(() => {
                 region_outline.stroke({ opacity: 0 });
             })
